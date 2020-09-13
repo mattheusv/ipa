@@ -42,9 +42,32 @@ impl Action {
     }
 }
 
+fn install_packages(packages: Vec<Package>) -> Result<(), error::IpaError> {
+    for package in packages {
+        println!("Installing package {}", package.name);
+        if !package.config.is_empty() && !package.path.is_empty() {
+            sys_link_file(Path::new(&package.config), Path::new(&package.path))?;
+        }
+    }
+    Ok(())
+}
+
+fn sys_link(links: Vec<SysLink>) -> Result<(), error::IpaError> {
+    for link in links {
+        sys_link_file(Path::new(&link.config), Path::new(&link.path))?;
+    }
+    Ok(())
+}
+
+fn sys_link_file(target: &Path, link_name: &Path) -> Result<(), error::IpaError> {
+    println!("Linking {:?} on {:?}", link_name, target);
+    Ok(())
+}
+
 fn main() -> Result<(), error::IpaError> {
     let action = Action::new(Path::new("ipa.yml"))?;
 
-    println!("{:#?}", action);
+    install_packages(action.packages)?;
+    sys_link(action.sys_links)?;
     Ok(())
 }
