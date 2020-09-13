@@ -1,28 +1,10 @@
-use serde::{Serialize, Deserialize};
-use std::io::Error;
-use std::path::Path;
+use serde::{Deserialize, Serialize};
 use std::fs;
-
-#[derive(Debug)]
-enum IpaError {
-    IO(Error),
-    InvalidConfig(serde_yaml::Error),
-}
-
-impl From<Error> for IpaError {
-    fn from(e: Error) -> Self {
-        IpaError::IO(e)
-    }
-}
-
-impl From<serde_yaml::Error> for IpaError {
-    fn from(e: serde_yaml::Error) -> Self {
-        IpaError::InvalidConfig(e)
-    }
-}
+use std::path::Path;
+mod error;
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Link {
+struct SysLink {
     config: String,
     path: String,
 }
@@ -48,11 +30,11 @@ struct Action {
     packages: Vec<Package>,
 
     #[serde(default)]
-    sys_links: Vec<Link>,
+    sys_links: Vec<SysLink>,
 }
 
-impl Action{
-    pub fn new(config_file: &Path) -> Result<Self, IpaError> {
+impl Action {
+    pub fn new(config_file: &Path) -> Result<Self, error::IpaError> {
         let content = fs::read_to_string(config_file)?;
 
         let action: Action = serde_yaml::from_str(&content)?;
@@ -60,8 +42,7 @@ impl Action{
     }
 }
 
-
-fn main() -> Result<(), IpaError>{
+fn main() -> Result<(), error::IpaError> {
     let action = Action::new(Path::new("ipa.yml"))?;
 
     println!("{:#?}", action);
