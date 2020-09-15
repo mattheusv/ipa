@@ -6,7 +6,7 @@ mod pacman;
 
 
 pub trait PackageManagement {
-    fn install(&self, name: &String) -> Result<(), error::IpaError>;
+    fn install(&self, name: &str) -> Result<(), error::IpaError>;
 }
 
 
