@@ -1,14 +1,13 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
+use std::os::unix;
 use std::path::Path;
 mod error;
 mod pacman;
 
-
 pub trait PackageManagement {
     fn install(&self, name: &str) -> Result<(), error::IpaError>;
 }
-
 
 #[derive(Debug, Serialize, Deserialize)]
 struct SysLink {
@@ -68,7 +67,24 @@ impl Ipa {
     pub fn process(&self) -> Result<(), error::IpaError> {
         for package in self.config.packages.iter() {
             self.pacman.install(&package.name)?;
+            if !package.config.is_empty() && !package.path.is_empty() {
+                self.symlink(Path::new(&package.path), Path::new(&package.config))?;
+            }
         }
+
+        for sys_link in self.config.sys_links.iter() {
+            self.symlink(Path::new(&sys_link.path), Path::new(&sys_link.config))?;
+        }
+        Ok(())
+    }
+
+    fn symlink(&self, src: &Path, dst: &Path) -> Result<(), error::IpaError> {
+        if dst.exists() {
+            println!("Symbolic link {:?} already exists", dst);
+            return Ok(());
+        }
+        println!("Linking {:?} in {:?}", src, dst);
+        unix::fs::symlink(src, dst)?;
         Ok(())
     }
 }
