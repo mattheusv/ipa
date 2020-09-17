@@ -31,7 +31,7 @@ struct Package {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Config {
+pub struct Config {
     #[serde(default)]
     packages: Vec<Package>,
 
@@ -40,9 +40,7 @@ struct Config {
 }
 
 impl Config {
-    pub fn new(config_file: &Path) -> Result<Self, error::IpaError> {
-        let content = fs::read_to_string(config_file)?;
-
+    pub fn new(content: &str) -> Result<Self, error::IpaError> {
         let config: Config = serde_yaml::from_str(&content)?;
         Ok(config)
     }
@@ -54,8 +52,17 @@ pub struct Ipa {
 }
 
 impl Ipa {
-    pub fn new(config_file: &Path) -> Result<Self, error::IpaError> {
-        let config = Config::new(config_file)?;
+    pub fn new(config: Config, pacman: Box<dyn PackageManagement>) -> Self {
+        Ipa {
+            config: config,
+            pacman: pacman,
+        }
+    }
+
+    pub fn from_file(config_yaml: &str) -> Result<Self, error::IpaError> {
+        let content = fs::read_to_string(config_yaml)?;
+
+        let config = Config::new(&content)?;
         let pacman = Box::new(pacman::Pacman::new());
 
         Ok(Ipa {
