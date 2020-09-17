@@ -17,3 +17,4 @@ impl From<serde_yaml::Error> for IpaError {
         IpaError::InvalidConfig(e)
     }
 }
+

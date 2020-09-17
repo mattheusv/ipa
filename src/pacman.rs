@@ -27,7 +27,12 @@ impl PackageManagement for Pacman {
             println!("Package {} already installed", package);
             return Ok(());
         }
-        println!("Installing package {}", package);
+        Command::new(self.bin)
+            .arg("-S")
+            .arg(package)
+            .arg("--noconfirm")
+            .arg("--quiet")
+            .status()?;
         Ok(())
     }
 }
