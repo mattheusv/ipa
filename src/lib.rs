@@ -85,7 +85,37 @@ impl Ipa {
         Ok(())
     }
 
+    fn symlink_dir(&self, src: &Path, dst: &Path) -> Result<(), error::IpaError> {
+        for entry in fs::read_dir(src)? {
+            let entry = entry?;
+
+            // The first entry of iterator is src path
+            if entry.path() == src {
+                continue;
+            }
+
+            if entry.path().is_dir() {
+                if let Some(name) = entry.path().file_name() {
+                    let dst_dir = dst.join(name);
+                    if !dst_dir.exists() {
+                        fs::create_dir(&dst_dir)?;
+                    }
+                    self.symlink_dir(entry.path().as_path(), dst_dir.as_path())?;
+                }
+            } else {
+                if let Some(name) = entry.path().file_name() {
+                    self.symlink(entry.path().as_path(), dst.join(name).as_path())?;
+                }
+            }
+        }
+        Ok(())
+    }
+
     fn symlink(&self, src: &Path, dst: &Path) -> Result<(), error::IpaError> {
+        if dst.is_dir() && src.is_dir() {
+            return self.symlink_dir(src, dst);
+        }
+
         if dst.exists() {
             println!("Symbolic link {:?} already exists", dst);
             return Ok(());
