@@ -9,10 +9,14 @@ pub trait PackageManagement {
     fn install(&self, name: &str) -> Result<(), error::IpaError>;
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct SysLink {
+#[derive(Debug, Default, Serialize, Deserialize)]
+struct SymLink {
     config: String,
+
     path: String,
+
+    #[serde(default)]
+    relink: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -21,13 +25,7 @@ struct Package {
     name: String,
 
     #[serde(default)]
-    config: String,
-
-    #[serde(default)]
-    path: String,
-
-    #[serde(default)]
-    aur: bool,
+    link: SymLink,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -36,7 +34,7 @@ pub struct Config {
     packages: Vec<Package>,
 
     #[serde(default)]
-    sys_links: Vec<SysLink>,
+    link: Vec<SymLink>,
 }
 
 impl Config {
@@ -74,18 +72,24 @@ impl Ipa {
     pub fn process(&self) -> Result<(), error::IpaError> {
         for package in self.config.packages.iter() {
             self.pacman.install(&package.name)?;
-            if !package.config.is_empty() && !package.path.is_empty() {
-                self.symlink(Path::new(&package.path), Path::new(&package.config))?;
+            if !package.link.config.is_empty() && !package.link.path.is_empty() {
+                self.symlink(
+                    Path::new(&package.link.path),
+                    Path::new(&package.link.config),
+                    package.link.relink,
+                )?;
             }
         }
 
-        for sys_link in self.config.sys_links.iter() {
-            self.symlink(Path::new(&sys_link.path), Path::new(&sys_link.config))?;
+        for link in self.config.link.iter() {
+            self.symlink(Path::new(&link.path), Path::new(&link.config), link.relink)?;
         }
+
         Ok(())
     }
 
-    fn symlink_dir(&self, src: &Path, dst: &Path) -> Result<(), error::IpaError> {
+    fn symlink_dir(&self, src: &Path, dst: &Path, relink: bool) -> Result<(), error::IpaError> {
+        println!("Create symbolic link to all files into {:?}", src);
         for entry in fs::read_dir(src)? {
             let entry = entry?;
 
@@ -100,20 +104,25 @@ impl Ipa {
                     if !dst_dir.exists() {
                         fs::create_dir(&dst_dir)?;
                     }
-                    self.symlink_dir(entry.path().as_path(), dst_dir.as_path())?;
+                    self.symlink_dir(entry.path().as_path(), dst_dir.as_path(), relink)?;
                 }
             } else {
                 if let Some(name) = entry.path().file_name() {
-                    self.symlink(entry.path().as_path(), dst.join(name).as_path())?;
+                    self.symlink(entry.path().as_path(), dst.join(name).as_path(), relink)?;
                 }
             }
         }
         Ok(())
     }
 
-    fn symlink(&self, src: &Path, dst: &Path) -> Result<(), error::IpaError> {
-        if dst.is_dir() && src.is_dir() {
-            return self.symlink_dir(src, dst);
+    fn symlink(&self, src: &Path, dst: &Path, relink: bool) -> Result<(), error::IpaError> {
+        if relink && dst.exists() && !dst.is_dir() {
+            println!("Relinking {:?}", dst);
+            fs::remove_file(dst)?;
+        }
+
+        if src.is_dir() && dst.is_dir() {
+            return self.symlink_dir(src, dst, relink);
         }
 
         if dst.exists() {
