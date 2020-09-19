@@ -59,7 +59,7 @@ impl Ipa {
         }
     }
 
-    pub fn from_file(config_yaml: &str) -> Result<Self, error::IpaError> {
+    pub fn from_file(config_yaml: &Path) -> Result<Self, error::IpaError> {
         let content = fs::read_to_string(config_yaml)?;
 
         let config = Config::new(&content)?;
