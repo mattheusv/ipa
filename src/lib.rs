@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::os::unix;
 use std::path::Path;
-mod error;
-mod pacman;
+pub mod error;
+pub mod pacman;
 
 pub trait PackageManagement {
     fn install(&self, name: &str) -> Result<(), error::IpaError>;
@@ -51,10 +51,7 @@ pub struct Ipa {
 
 impl Ipa {
     pub fn new(config: Config, pacman: Box<dyn PackageManagement>) -> Self {
-        Ipa {
-            config: config,
-            pacman: pacman,
-        }
+        Ipa { config, pacman }
     }
 
     pub fn from_file(config_yaml: &Path) -> Result<Self, error::IpaError> {
@@ -63,10 +60,7 @@ impl Ipa {
         let config = Config::new(&content)?;
         let pacman = Box::new(pacman::Pacman::new());
 
-        Ok(Ipa {
-            config: config,
-            pacman: pacman,
-        })
+        Ok(Ipa { config, pacman })
     }
 
     pub fn process(&self) -> Result<(), error::IpaError> {
@@ -116,21 +110,111 @@ impl Ipa {
     }
 
     fn symlink(&self, src: &Path, dst: &Path, relink: bool) -> Result<(), error::IpaError> {
-        if relink && dst.exists() && !dst.is_dir() {
-            println!("Relinking {:?}", dst);
-            fs::remove_file(dst)?;
-        }
-
         if src.is_dir() && dst.is_dir() {
             return self.symlink_dir(src, dst, relink);
         }
 
         if dst.exists() {
-            println!("Symbolic link {:?} already exists", dst);
-            return Ok(());
+            if !relink {
+                println!("Symbolic link {:?} already exists", dst);
+                return Ok(());
+            }
+            println!("Relinking {:?}", dst);
+            fs::remove_file(dst)?;
         }
+
         println!("Linking {:?} in {:?}", src, dst);
         unix::fs::symlink(src, dst)?;
         Ok(())
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::{tempdir, NamedTempFile};
+
+    struct FakePacman {}
+
+    impl PackageManagement for FakePacman {
+        fn install(&self, _package: &str) -> Result<(), error::IpaError> {
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn install_and_setup_packages() {
+        let src_dir = tempdir().unwrap();
+        let dst_dir = tempdir().unwrap();
+
+        let src_config = NamedTempFile::new_in(&src_dir).unwrap();
+
+        let content = format!(
+            "
+packages:
+    - name: foobar
+      link:
+        config: {:?}
+        path: {:?}
+",
+            dst_dir.path(),
+            src_dir.path(),
+        );
+
+        let result = Config::new(&content);
+        assert!(result.is_ok());
+        let config = result.unwrap();
+
+        let ipa = Ipa::new(config, Box::new(FakePacman {}));
+
+        assert!(ipa.process().is_ok());
+
+        let dst_config = dst_dir.path().join(src_config.path().file_name().unwrap());
+
+        assert!(
+            dst_config.as_path().exists(),
+            "Assert that {:?} is created",
+            dst_config.as_path()
+        );
+    }
+
+    #[test]
+    fn install_and_relink_packages() {
+        let src_dir = tempdir().unwrap();
+        let dst_dir = tempdir().unwrap();
+
+        let src_path_config = src_dir.path().join("src");
+        std::fs::File::create(&src_path_config).unwrap();
+
+        let dst_path_config = dst_dir.path().join("dst");
+        std::fs::File::create(&dst_path_config).unwrap();
+
+        let content = format!(
+            "
+packages:
+    - name: foobar
+      link:
+        config: {:?}
+        path: {:?}
+        relink: true
+",
+            dst_path_config, src_path_config,
+        );
+
+        let result = Config::new(&content);
+        assert!(result.is_ok());
+
+        let config = result.unwrap();
+        let ipa = Ipa::new(config, Box::new(FakePacman {}));
+
+        assert!(ipa.process().is_ok());
+
+        let is_symlink = std::fs::symlink_metadata(dst_path_config.as_path())
+            .unwrap()
+            .file_type()
+            .is_symlink();
+
+        assert_eq!(true, is_symlink);
     }
 }
