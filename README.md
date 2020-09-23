@@ -1,4 +1,5 @@
-# ipa
+# ipa ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/msAlcantara/ipa/Test)
+
 Ipa is another dotfiles manager, that can be used to **install and configure** your Arch Linux programs using a configuration file.
 
 
