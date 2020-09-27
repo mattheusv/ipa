@@ -1,9 +1,12 @@
+use std::env::VarError;
+use shellexpand::LookupError;
 use std::io::Error;
 
 #[derive(Debug)]
 pub enum IpaError {
     IO(Error),
     InvalidConfig(serde_yaml::Error),
+    InvalidPath(LookupError<VarError>),
 }
 
 impl From<Error> for IpaError {
@@ -18,3 +21,8 @@ impl From<serde_yaml::Error> for IpaError {
     }
 }
 
+impl From<LookupError<VarError>> for IpaError {
+    fn from(e: LookupError<VarError>) -> Self {
+        IpaError::InvalidPath(e)
+    }
+}

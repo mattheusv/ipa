@@ -49,6 +49,12 @@ pub struct Ipa {
     pacman: Box<dyn PackageManagement>,
 }
 
+fn new_path<'a>(s: &str, out: &'a mut String) -> Result<&'a Path, error::IpaError> {
+    let path = shellexpand::full(s)?;
+    out.push_str(path.as_ref());
+    Ok(Path::new(out))
+}
+
 impl Ipa {
     pub fn new(config: Config, pacman: Box<dyn PackageManagement>) -> Self {
         Ipa { config, pacman }
@@ -67,16 +73,21 @@ impl Ipa {
         for package in self.config.packages.iter() {
             self.pacman.install(&package.name)?;
             if !package.link.config.is_empty() && !package.link.path.is_empty() {
+                let mut src = String::new();
+                let mut dst = String::new();
+
                 self.symlink(
-                    Path::new(&package.link.path),
-                    Path::new(&package.link.config),
+                    new_path(&package.link.path, &mut src)?,
+                    new_path(&package.link.config, &mut dst)?,
                     package.link.relink,
                 )?;
             }
         }
 
         for link in self.config.link.iter() {
-            self.symlink(Path::new(&link.path), Path::new(&link.config), link.relink)?;
+            let mut src = String::new();
+            let mut dst = String::new();
+            self.symlink(new_path(&link.path, &mut src)?, new_path(&link.config, &mut dst)?, link.relink)?;
         }
 
         Ok(())
