@@ -9,12 +9,15 @@ fn main() {
             Arg::with_name("file")
                 .long("file")
                 .short("f")
-                .required(true)
+                .required(false)
                 .takes_value(true),
         )
         .get_matches();
 
-    let config_file = matches.value_of("file").unwrap();
+    let config_file = match matches.value_of("file") {
+        Some(f) => f,
+        None => "ipa.yml",
+    };
 
     let ipa = Ipa::from_file(Path::new(config_file));
 
