@@ -31,22 +31,22 @@ $ ipa --help
 packages:  # Download and configure packages
     - name: alacritty # Name of program to install
       link:
-          config: /home/user/.config/alacritty/alacritty.yml # Path to config file of program
-          path: /home/user/.dotfiles/config/alacritty/alacritty.yml # Path to your configuration to create a symbolic link
+          config: ~/.config/alacritty/alacritty.yml # Path to config file of program
+          path: ~/.dotfiles/config/alacritty/alacritty.yml # Path to your configuration to create a symbolic link
           relink: true # Will relink if file already exists (Default false)
 
      - name: neovim
        link:
-           config: /home/user/.config/nvim/ # Link all files into directory
-           path: /home/user/.dotfiles/config/nvim
+           config: ~/.config/nvim/ # Link all files into directory
+           path: /~/.dotfiles/config/nvim
 
     - name: firefox-developer-edition # only install package
 
 
 
 link: # Only link file
-    - config: /home/user/.bash_profile 
-      path: /home/user/.dotfiles/config/bash/bash_profile
+    - config: ~/.bash_profile 
+      path: ~/.dotfiles/config/bash/bash_profile
 ```
 
 If you have a `config` folder that represents the `~/.config` with all your configuration you can put this in your configuration file and ipa will create a symbolic link to all.
@@ -54,8 +54,8 @@ If you have a `config` folder that represents the `~/.config` with all your conf
 ```yaml
 
 link:
-    - config: /home/user/.config 
-      path: /home/user/.dotfiles/config/ # Will link all files into ~/.config
+    - config: ~/.config 
+      path: ~/.dotfiles/config/ # Will link all files into ~/.config
 ```
 
 ## Usage
