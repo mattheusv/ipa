@@ -7,6 +7,7 @@ pub enum IpaError {
     IO(Error),
     InvalidConfig(serde_yaml::Error),
     InvalidPath(LookupError<VarError>),
+    InvalidPackage,
 }
 
 impl From<Error> for IpaError {

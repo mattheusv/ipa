@@ -9,23 +9,29 @@ pub trait PackageManagement {
     fn install(&self, name: &str) -> Result<(), error::IpaError>;
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
-struct SymLink {
+#[derive(Debug, Default, Serialize, Deserialize, PartialEq)]
+pub struct SymLink {
     config: String,
 
     path: String,
 
     #[serde(default)]
     relink: bool,
+
+    #[serde(default)]
+    group: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct Package {
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+pub struct Package {
     #[serde(default)]
     name: String,
 
     #[serde(default)]
     link: SymLink,
+
+    #[serde(default)]
+    group: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -69,8 +75,34 @@ impl Ipa {
         Ok(Ipa { config, pacman })
     }
 
-    pub fn process(&self) -> Result<(), error::IpaError> {
-        for package in self.config.packages.iter() {
+    fn filter_packages(&self, group: &str) -> Vec<&Package> {
+        self.config
+            .packages
+            .iter()
+            .filter(|p| p.group == group)
+            .map(|p| p)
+            .collect()
+    }
+
+    fn filter_links(&self, group: &str) -> Vec<&SymLink> {
+        self.config
+            .link
+            .iter()
+            .filter(|l| l.group == group)
+            .map(|l| l)
+            .collect()
+    }
+
+    fn process(
+        &self,
+        packages: &Vec<&Package>,
+        links: &Vec<&SymLink>,
+    ) -> Result<(), error::IpaError> {
+        for package in packages.iter() {
+            if package.name.is_empty() {
+                return Err(error::IpaError::InvalidPackage);
+            }
+
             self.pacman.install(&package.name)?;
             if !package.link.config.is_empty() && !package.link.path.is_empty() {
                 let mut src = String::new();
@@ -84,13 +116,28 @@ impl Ipa {
             }
         }
 
-        for link in self.config.link.iter() {
+        for link in links.iter() {
             let mut src = String::new();
             let mut dst = String::new();
-            self.symlink(new_path(&link.path, &mut src)?, new_path(&link.config, &mut dst)?, link.relink)?;
+            self.symlink(
+                new_path(&link.path, &mut src)?,
+                new_path(&link.config, &mut dst)?,
+                link.relink,
+            )?;
         }
 
         Ok(())
+    }
+
+    pub fn setup(&self) -> Result<(), error::IpaError> {
+        self.process(
+            &self.config.packages.iter().map(|p| p).collect(),
+            &self.config.link.iter().map(|l| l).collect(),
+        )
+    }
+
+    pub fn setup_group(&self, group: &str) -> Result<(), error::IpaError> {
+        self.process(&self.filter_packages(group), &self.filter_links(group))
     }
 
     fn symlink_dir(&self, src: &Path, dst: &Path, relink: bool) -> Result<(), error::IpaError> {
@@ -140,7 +187,6 @@ impl Ipa {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -152,6 +198,80 @@ mod tests {
         fn install(&self, _package: &str) -> Result<(), error::IpaError> {
             Ok(())
         }
+    }
+
+    #[test]
+    fn filter_links() {
+        let content = "
+link:
+    - config: ~/.testing/nvim
+      path: ~/.testing/dotfiles/nvim
+      group: dev
+
+    - config: ~/.testing/alacritty
+      path: ~/.testing/dotfiles/alacritty
+      group: dev
+
+    - config: ~/.testing/i3
+      path: ~/.testing/dotfiles/i3
+      group: gui
+            ";
+        let group = "gui";
+
+        let ipa = Ipa::new(Config::new(content).unwrap(), Box::new(FakePacman {}));
+
+        let packages = ipa.filter_links(&group);
+        let i3 = SymLink {
+            config: String::from("~/.testing/i3"),
+            path: String::from("~/.testing/dotfiles/i3"),
+            relink: false,
+            group: String::from("gui"),
+        };
+
+        assert_eq!(packages, vec![&i3]);
+    }
+
+    #[test]
+    fn filter_packages() {
+        let content = "
+packages:
+    - name: nvim
+      group: dev
+
+    - name: alacritty
+      group: dev
+
+    - name: firefox
+      group: gui
+            ";
+        let group = "dev";
+
+        let ipa = Ipa::new(Config::new(content).unwrap(), Box::new(FakePacman {}));
+
+        let packages = ipa.filter_packages(&group);
+        let nvim = Package {
+            name: String::from("nvim"),
+            link: SymLink {
+                config: String::new(),
+                path: String::new(),
+                relink: false,
+                group: String::new(),
+            },
+            group: String::from("dev"),
+        };
+
+        let alacritty = Package {
+            name: String::from("alacritty"),
+            link: SymLink {
+                config: String::new(),
+                path: String::new(),
+                relink: false,
+                group: String::new(),
+            },
+            group: String::from("dev"),
+        };
+
+        assert_eq!(packages, vec![&nvim, &alacritty]);
     }
 
     #[test]
@@ -179,7 +299,7 @@ packages:
 
         let ipa = Ipa::new(config, Box::new(FakePacman {}));
 
-        assert!(ipa.process().is_ok());
+        assert!(ipa.setup().is_ok());
 
         let dst_config = dst_dir.path().join(src_config.path().file_name().unwrap());
 
@@ -219,7 +339,7 @@ packages:
         let config = result.unwrap();
         let ipa = Ipa::new(config, Box::new(FakePacman {}));
 
-        assert!(ipa.process().is_ok());
+        assert!(ipa.setup().is_ok());
 
         let is_symlink = std::fs::symlink_metadata(dst_path_config.as_path())
             .unwrap()
