@@ -75,12 +75,30 @@ impl Ipa {
         Ok(Ipa { config, pacman })
     }
 
+    fn filter_except_packages(&self, group: &str) -> Vec<&Package> {
+        self.config
+            .packages
+            .iter()
+            .filter(|p| p.group != group)
+            .map(|p| p)
+            .collect()
+    }
+
     fn filter_packages(&self, group: &str) -> Vec<&Package> {
         self.config
             .packages
             .iter()
             .filter(|p| p.group == group)
             .map(|p| p)
+            .collect()
+    }
+
+    fn filter_except_links(&self, group: &str) -> Vec<&SymLink> {
+        self.config
+            .link
+            .iter()
+            .filter(|l| l.group != group)
+            .map(|l| l)
             .collect()
     }
 
@@ -138,6 +156,10 @@ impl Ipa {
 
     pub fn setup_group(&self, group: &str) -> Result<(), error::IpaError> {
         self.process(&self.filter_packages(group), &self.filter_links(group))
+    }
+
+    pub fn setup_except_group(&self, group: &str) -> Result<(), error::IpaError> {
+        self.process(&self.filter_except_packages(group), &self.filter_except_links(group))
     }
 
     fn symlink_dir(&self, src: &Path, dst: &Path, relink: bool) -> Result<(), error::IpaError> {
@@ -201,6 +223,44 @@ mod tests {
     }
 
     #[test]
+    fn filter_except_links() {
+        let content = "
+link:
+    - config: ~/.testing/nvim
+      path: ~/.testing/dotfiles/nvim
+      group: dev
+
+    - config: ~/.testing/alacritty
+      path: ~/.testing/dotfiles/alacritty
+      group: dev
+
+    - config: ~/.testing/i3
+      path: ~/.testing/dotfiles/i3
+      group: gui
+            ";
+        let group = "gui";
+
+        let ipa = Ipa::new(Config::new(content).unwrap(), Box::new(FakePacman {}));
+
+        let packages = ipa.filter_except_links(&group);
+
+        let alacritty = SymLink {
+            config: String::from("~/.testing/alacritty"),
+            path: String::from("~/.testing/dotfiles/alacritty"),
+            relink: false,
+            group: String::from("dev"),
+        };
+        let nvim = SymLink {
+            config: String::from("~/.testing/nvim"),
+            path: String::from("~/.testing/dotfiles/nvim"),
+            relink: false,
+            group: String::from("dev"),
+        };
+
+        assert_eq!(packages, vec![&nvim, &alacritty]);
+    }
+
+    #[test]
     fn filter_links() {
         let content = "
 link:
@@ -230,6 +290,39 @@ link:
 
         assert_eq!(packages, vec![&i3]);
     }
+
+    #[test]
+    fn filter_except_packages() {
+        let content = "
+packages:
+    - name: nvim
+      group: dev
+
+    - name: alacritty
+      group: dev
+
+    - name: firefox
+      group: gui
+            ";
+        let group = "gui";
+
+        let ipa = Ipa::new(Config::new(content).unwrap(), Box::new(FakePacman {}));
+
+        let packages = ipa.filter_packages(&group);
+        let firefox = Package {
+            name: String::from("firefox"),
+            link: SymLink {
+                config: String::new(),
+                path: String::new(),
+                relink: false,
+                group: String::new(),
+            },
+            group: String::from("gui"),
+        };
+
+        assert_eq!(packages, vec![&firefox]);
+    }
+
 
     #[test]
     fn filter_packages() {

@@ -13,8 +13,16 @@ fn main() -> Result<(), IpaError> {
                 .takes_value(true),
         )
         .arg(
-            Arg::with_name("group")
+            Arg::with_name("only-group")
+                .value_name("group")
                 .long("only")
+                .required(false)
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("except-group")
+                .value_name("group")
+                .long("except")
                 .required(false)
                 .takes_value(true),
         )
@@ -27,8 +35,10 @@ fn main() -> Result<(), IpaError> {
 
     let ipa = Ipa::from_file(Path::new(config_file))?;
 
-    if let Some(group) = matches.value_of("group") {
+    if let Some(group) = matches.value_of("only-group") {
         ipa.setup_group(group)?;
+    } else if let Some(group) = matches.value_of("except-group") {
+        ipa.setup_except_group(group)?;
     } else {
         ipa.setup()?;
     }
