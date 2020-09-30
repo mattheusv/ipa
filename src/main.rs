@@ -30,7 +30,7 @@ fn main() -> Result<(), IpaError> {
 
     let config_file = match matches.value_of("file") {
         Some(f) => f,
-        None => "ipa.yml",
+        None => "config.yml",
     };
 
     let ipa = Ipa::from_file(Path::new(config_file))?;
