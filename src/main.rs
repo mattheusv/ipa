@@ -1,47 +1,39 @@
-use clap::{App, Arg};
-use ipa::error::IpaError;
-use ipa::Ipa;
-use std::path::Path;
+use ipa::{config, error, Ipa};
+mod cli;
+mod pacman;
 
-fn main() -> Result<(), IpaError> {
-    let matches = App::new("ipa")
-        .arg(
-            Arg::with_name("file")
-                .long("file")
-                .short("f")
-                .required(false)
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name("only-group")
-                .value_name("group")
-                .long("only")
-                .required(false)
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name("except-group")
-                .value_name("group")
-                .long("except")
-                .required(false)
-                .takes_value(true),
-        )
-        .get_matches();
+use cli::Options;
+use config::Config;
+use error::IpaError;
+use pacman::Pacman;
 
-    let config_file = match matches.value_of("file") {
-        Some(f) => f,
-        None => "config.yml",
+fn main() {
+    let options = Options::new();
+
+    let config = match Config::load(options.config_file.as_path()) {
+        Ok(config) => config,
+        Err(err) => {
+            eprintln!("Error: {}", err);
+            std::process::exit(1);
+        }
     };
 
-    let ipa = Ipa::from_file(Path::new(config_file))?;
+    if let Err(err) = run(options, config) {
+        eprintln!("Unrecoverable error: {}", err);
+        std::process::exit(1);
+    }
+}
 
-    if let Some(group) = matches.value_of("only-group") {
-        ipa.setup_group(group)?;
-    } else if let Some(group) = matches.value_of("except-group") {
-        ipa.setup_except_group(group)?;
-    } else {
-        ipa.setup()?;
+fn run(options: Options, config: Config) -> Result<(), IpaError> {
+    let ipa = Ipa::new(config, Pacman::new());
+
+    if let Some(only_group) = options.only_group {
+        return ipa.setup_group(&only_group);
     }
 
-    Ok(())
+    if let Some(except_group) = options.except_group {
+        return ipa.setup_except_group(&except_group);
+    }
+
+    ipa.setup()
 }

@@ -1,78 +1,33 @@
-use serde::{Deserialize, Serialize};
 use std::fs;
 use std::os::unix;
 use std::path::Path;
+pub mod config;
 pub mod error;
-pub mod pacman;
+
+use config::{Config, Package, SymLink};
+use error::IpaError;
 
 pub trait PackageManagement {
-    fn install(&self, name: &str) -> Result<(), error::IpaError>;
+    fn install(&self, name: &str) -> Result<(), IpaError>;
 }
 
-#[derive(Debug, Default, Serialize, Deserialize, PartialEq)]
-pub struct SymLink {
-    config: String,
-
-    path: String,
-
-    #[serde(default)]
-    relink: bool,
-
-    #[serde(default)]
-    group: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
-pub struct Package {
-    #[serde(default)]
-    name: String,
-
-    #[serde(default)]
-    link: SymLink,
-
-    #[serde(default)]
-    group: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Config {
-    #[serde(default)]
-    packages: Vec<Package>,
-
-    #[serde(default)]
-    link: Vec<SymLink>,
-}
-
-impl Config {
-    pub fn new(content: &str) -> Result<Self, error::IpaError> {
-        let config: Config = serde_yaml::from_str(&content)?;
-        Ok(config)
-    }
-}
-
-pub struct Ipa {
+pub struct Ipa<P> {
     config: Config,
-    pacman: Box<dyn PackageManagement>,
+    pacman: P,
 }
 
-fn new_path<'a>(s: &str, out: &'a mut String) -> Result<&'a Path, error::IpaError> {
+fn new_path<'a>(s: &str, out: &'a mut String) -> Result<&'a Path, IpaError> {
     let path = shellexpand::full(s)?;
     out.push_str(path.as_ref());
     Ok(Path::new(out))
 }
 
-impl Ipa {
-    pub fn new(config: Config, pacman: Box<dyn PackageManagement>) -> Self {
+impl<P> Ipa<P>
+where
+    P: PackageManagement,
+{
+    pub fn new(config: Config, pacman: P) -> Self {
         Ipa { config, pacman }
-    }
-
-    pub fn from_file(config_yaml: &Path) -> Result<Self, error::IpaError> {
-        let content = fs::read_to_string(config_yaml)?;
-
-        let config = Config::new(&content)?;
-        let pacman = Box::new(pacman::Pacman::new());
-
-        Ok(Ipa { config, pacman })
     }
 
     fn filter_except_packages(&self, group: &str) -> Vec<&Package> {
@@ -111,14 +66,10 @@ impl Ipa {
             .collect()
     }
 
-    fn process(
-        &self,
-        packages: &Vec<&Package>,
-        links: &Vec<&SymLink>,
-    ) -> Result<(), error::IpaError> {
+    fn process(&self, packages: &Vec<&Package>, links: &Vec<&SymLink>) -> Result<(), IpaError> {
         for package in packages.iter() {
             if package.name.is_empty() {
-                return Err(error::IpaError::InvalidPackage);
+                return Err(IpaError::InvalidPackage);
             }
 
             self.pacman.install(&package.name)?;
@@ -147,22 +98,25 @@ impl Ipa {
         Ok(())
     }
 
-    pub fn setup(&self) -> Result<(), error::IpaError> {
+    pub fn setup(&self) -> Result<(), IpaError> {
         self.process(
             &self.config.packages.iter().map(|p| p).collect(),
             &self.config.link.iter().map(|l| l).collect(),
         )
     }
 
-    pub fn setup_group(&self, group: &str) -> Result<(), error::IpaError> {
+    pub fn setup_group(&self, group: &str) -> Result<(), IpaError> {
         self.process(&self.filter_packages(group), &self.filter_links(group))
     }
 
-    pub fn setup_except_group(&self, group: &str) -> Result<(), error::IpaError> {
-        self.process(&self.filter_except_packages(group), &self.filter_except_links(group))
+    pub fn setup_except_group(&self, group: &str) -> Result<(), IpaError> {
+        self.process(
+            &self.filter_except_packages(group),
+            &self.filter_except_links(group),
+        )
     }
 
-    fn symlink_dir(&self, src: &Path, dst: &Path, relink: bool) -> Result<(), error::IpaError> {
+    fn symlink_dir(&self, src: &Path, dst: &Path, relink: bool) -> Result<(), IpaError> {
         println!("Create symbolic link to all files into {:?}", src);
         for entry in fs::read_dir(src)? {
             let entry = entry?;
@@ -189,7 +143,7 @@ impl Ipa {
         Ok(())
     }
 
-    fn symlink(&self, src: &Path, dst: &Path, relink: bool) -> Result<(), error::IpaError> {
+    fn symlink(&self, src: &Path, dst: &Path, relink: bool) -> Result<(), IpaError> {
         if src.is_dir() && dst.is_dir() {
             return self.symlink_dir(src, dst, relink);
         }
@@ -217,7 +171,7 @@ mod tests {
     struct FakePacman {}
 
     impl PackageManagement for FakePacman {
-        fn install(&self, _package: &str) -> Result<(), error::IpaError> {
+        fn install(&self, _package: &str) -> Result<(), IpaError> {
             Ok(())
         }
     }
@@ -240,7 +194,7 @@ link:
             ";
         let group = "gui";
 
-        let ipa = Ipa::new(Config::new(content).unwrap(), Box::new(FakePacman {}));
+        let ipa = Ipa::new(Config::new(content).unwrap(), FakePacman {});
 
         let packages = ipa.filter_except_links(&group);
 
@@ -278,7 +232,7 @@ link:
             ";
         let group = "gui";
 
-        let ipa = Ipa::new(Config::new(content).unwrap(), Box::new(FakePacman {}));
+        let ipa = Ipa::new(Config::new(content).unwrap(), FakePacman {});
 
         let packages = ipa.filter_links(&group);
         let i3 = SymLink {
@@ -306,7 +260,7 @@ packages:
             ";
         let group = "gui";
 
-        let ipa = Ipa::new(Config::new(content).unwrap(), Box::new(FakePacman {}));
+        let ipa = Ipa::new(Config::new(content).unwrap(), FakePacman {});
 
         let packages = ipa.filter_packages(&group);
         let firefox = Package {
@@ -323,7 +277,6 @@ packages:
         assert_eq!(packages, vec![&firefox]);
     }
 
-
     #[test]
     fn filter_packages() {
         let content = "
@@ -339,7 +292,7 @@ packages:
             ";
         let group = "dev";
 
-        let ipa = Ipa::new(Config::new(content).unwrap(), Box::new(FakePacman {}));
+        let ipa = Ipa::new(Config::new(content).unwrap(), FakePacman {});
 
         let packages = ipa.filter_packages(&group);
         let nvim = Package {
@@ -390,7 +343,7 @@ packages:
         assert!(result.is_ok());
         let config = result.unwrap();
 
-        let ipa = Ipa::new(config, Box::new(FakePacman {}));
+        let ipa = Ipa::new(config, FakePacman {});
 
         assert!(ipa.setup().is_ok());
 
@@ -430,7 +383,7 @@ packages:
         assert!(result.is_ok());
 
         let config = result.unwrap();
-        let ipa = Ipa::new(config, Box::new(FakePacman {}));
+        let ipa = Ipa::new(config, FakePacman {});
 
         assert!(ipa.setup().is_ok());
 
