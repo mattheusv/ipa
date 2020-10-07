@@ -25,7 +25,8 @@ fn main() {
 }
 
 fn run(options: Options, config: Config) -> Result<(), IpaError> {
-    let ipa = Ipa::new(config, Pacman::new());
+    let pacman = Pacman::new();
+    let ipa = Ipa::new(config, &pacman);
 
     if let Some(only_group) = options.only_group {
         return ipa.setup_group(&only_group);

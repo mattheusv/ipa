@@ -11,9 +11,9 @@ pub trait PackageManagement {
     fn install(&self, name: &str) -> Result<(), IpaError>;
 }
 
-pub struct Ipa<P> {
+pub struct Ipa<'a, P: PackageManagement> {
     config: Config,
-    pacman: P,
+    pacman: &'a P,
 }
 
 fn new_path<'a>(s: &str, out: &'a mut String) -> Result<&'a Path, IpaError> {
@@ -22,11 +22,11 @@ fn new_path<'a>(s: &str, out: &'a mut String) -> Result<&'a Path, IpaError> {
     Ok(Path::new(out))
 }
 
-impl<P> Ipa<P>
+impl<'a, P> Ipa<'a, P>
 where
     P: PackageManagement,
 {
-    pub fn new(config: Config, pacman: P) -> Self {
+    pub fn new(config: Config, pacman: &'a P) -> Self {
         Ipa { config, pacman }
     }
 
@@ -166,12 +166,26 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::cell::RefCell;
     use tempfile::{tempdir, NamedTempFile};
 
-    struct FakePacman {}
+    struct FakePacman {
+        installed_packages: RefCell<Vec<String>>,
+    }
+
+    impl FakePacman {
+        fn new() -> Self {
+            FakePacman {
+                installed_packages: RefCell::new(vec![]),
+            }
+        }
+    }
 
     impl PackageManagement for FakePacman {
-        fn install(&self, _package: &str) -> Result<(), IpaError> {
+        fn install(&self, package: &str) -> Result<(), IpaError> {
+            self.installed_packages
+                .borrow_mut()
+                .push(String::from(package));
             Ok(())
         }
     }
@@ -194,7 +208,8 @@ link:
             ";
         let group = "gui";
 
-        let ipa = Ipa::new(Config::new(content).unwrap(), FakePacman {});
+        let pacman = FakePacman::new();
+        let ipa = Ipa::new(Config::new(content).unwrap(), &pacman);
 
         let packages = ipa.filter_except_links(&group);
 
@@ -232,7 +247,8 @@ link:
             ";
         let group = "gui";
 
-        let ipa = Ipa::new(Config::new(content).unwrap(), FakePacman {});
+        let pacman = FakePacman::new();
+        let ipa = Ipa::new(Config::new(content).unwrap(), &pacman);
 
         let packages = ipa.filter_links(&group);
         let i3 = SymLink {
@@ -260,7 +276,8 @@ packages:
             ";
         let group = "gui";
 
-        let ipa = Ipa::new(Config::new(content).unwrap(), FakePacman {});
+        let pacman = FakePacman::new();
+        let ipa = Ipa::new(Config::new(content).unwrap(), &pacman);
 
         let packages = ipa.filter_packages(&group);
         let firefox = Package {
@@ -292,7 +309,8 @@ packages:
             ";
         let group = "dev";
 
-        let ipa = Ipa::new(Config::new(content).unwrap(), FakePacman {});
+        let pacman = FakePacman::new();
+        let ipa = Ipa::new(Config::new(content).unwrap(), &pacman);
 
         let packages = ipa.filter_packages(&group);
         let nvim = Package {
@@ -343,7 +361,8 @@ packages:
         assert!(result.is_ok());
         let config = result.unwrap();
 
-        let ipa = Ipa::new(config, FakePacman {});
+        let pacman = FakePacman::new();
+        let ipa = Ipa::new(config, &pacman);
 
         assert!(ipa.setup().is_ok());
 
@@ -383,7 +402,8 @@ packages:
         assert!(result.is_ok());
 
         let config = result.unwrap();
-        let ipa = Ipa::new(config, FakePacman {});
+        let pacman = FakePacman::new();
+        let ipa = Ipa::new(config, &pacman);
 
         assert!(ipa.setup().is_ok());
 
@@ -393,5 +413,67 @@ packages:
             .is_symlink();
 
         assert_eq!(true, is_symlink);
+    }
+
+    #[test]
+    fn install_only_packages() {
+        let content = "
+packages:
+    - name: one
+      group: dev
+    - name: two
+      group: gui
+    - name: another_one
+      group: gui
+";
+
+        let config = Config::new(&content).unwrap();
+
+        let pacman = FakePacman::new();
+        let ipa = Ipa::new(config, &pacman);
+
+        assert!(ipa.setup_group("dev").is_ok());
+
+        assert_eq!(1, pacman.installed_packages.borrow().len());
+    }
+
+    #[test]
+    fn install_except_packages() {
+        let content = "
+packages:
+    - name: one
+      group: dev
+    - name: two
+      group: gui
+    - name: another_one
+      group: gui
+";
+
+        let config = Config::new(&content).unwrap();
+
+        let pacman = FakePacman::new();
+        let ipa = Ipa::new(config, &pacman);
+
+        assert!(ipa.setup_except_group("dev").is_ok());
+        assert_eq!(2, pacman.installed_packages.borrow().len());
+    }
+
+    #[test]
+    fn install_all_packages() {
+        let content = "
+packages:
+    - name: one
+    - name: two
+    - name: another_one
+";
+
+        let config = Config::new(&content).unwrap();
+
+        let pacman = FakePacman::new();
+        let ipa = Ipa::new(config, &pacman);
+
+        assert!(ipa.setup().is_ok());
+
+        assert_eq!(3, pacman.installed_packages.borrow().len());
     }
 }
