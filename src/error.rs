@@ -8,6 +8,7 @@ pub enum IpaError {
     InvalidConfig(serde_yaml::Error),
     InvalidPath(LookupError<VarError>),
     InvalidPackage,
+    InvalidGroup,
 }
 
 impl std::fmt::Display for IpaError {
@@ -24,6 +25,9 @@ impl std::fmt::Display for IpaError {
             },
             IpaError::InvalidPackage => {
                 write!(f, "Invalid package name")
+            },
+            IpaError::InvalidGroup => {
+                write!(f, "Invalid group name")
             },
         }
     }

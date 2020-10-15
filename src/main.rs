@@ -1,4 +1,4 @@
-use ipa::{config, error, Ipa};
+use ipa::{config, error, runner};
 mod cli;
 mod pacman;
 
@@ -6,6 +6,7 @@ use cli::Options;
 use config::Config;
 use error::IpaError;
 use pacman::Pacman;
+use runner::Ipa;
 
 fn main() {
     let options = Options::new();
