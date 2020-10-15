@@ -1,6 +1,6 @@
 # ipa ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/msAlcantara/ipa/Test)
 
-Ipa is another dotfiles manager, that can be used to **install and configure** your Arch Linux programs using a configuration file.
+Ipa is another dotfiles manager, that can be used to **install and configure** (only to Arch Linux installation for now) programs using a configuration file.
 
 
 ## Motivation
@@ -28,41 +28,43 @@ $ ipa --help
 
 ## Configuration
 Ipa use a yaml configuration file that you can describe all packages and config files that you want to install.
+The configuration file is divided between groups, so you can create groups of configs and setup them individually latter.
 
-### Full example
+### Example
 
 ``` yaml
-packages:
-    - name: alacritty
-      group: gui
-      link:
-          config: ~/.config/alacritty/alacritty.yml
-          path: ~/.dotfiles/config/alacritty/alacritty.yml
-          relink: true
+gui: # group gui
+  - link:
+      config: ~/.config/i3blocks/config
+      path: ~/.dotfiles/config/i3blocks/config
 
-    - name: neovim
-      group: dev
-      link:
-          config: ~/.config/nvim/ # Link all files into directory
-          path: /~/.dotfiles/config/nvim
+  - package:
+      name: i3
+    link:
+      config: ~/.config/i3/config
+      path: ~/.dotfiles/config/i3/config
 
-    - name: firefox-developer-edition # only install package
-      group: gui
-
-link:
-    - config: ~/.bash_profile 
-      path: ~/.dotfiles/config/bash/bash_profile
-      group: dev
+dev: # group dev
+  - link:
+      config: ~/.gitconfig
+      path: ~/.dotfiles/config/git/gitconfig
+      relink: true
+  - package:
+      name: neovim
+    link:
+      config: ~/.config/nvim/
+      path: /~/.dotfiles/config/nvim
+      relink: true
 ```
 
 Ipa will search for file called `config.yml` on the root of directory, so you can just call `ipa`, but, you can use the flag `-f` too specify a custom file name.
 
 
 ### Options
-The configuration file is divided between the `packages` and` link` sessions.
+You can configure ipa to install packages and create symbolic links of your config files.
 
 #### Link
-The `link` section is responsible for creating symbolically links. If necessary, items can be configured to be relinked, overwriting the current files. Environment variables are automatically expanded if used.
+The `link` is responsible for creating symbolically links. If necessary, items can be configured to be relinked, overwriting the current files. Environment variables are automatically expanded if used.
 
 #### Format
 
@@ -71,37 +73,32 @@ The `link` section is responsible for creating symbolically links. If necessary,
 | config    | Destination config file to be created.                     |
 | path      | Source of config file to create a symbolically link.       |
 | relink    | Force overwriting file if allready exists (Default false). |
-| group     | Group name to agroup configs (Default empty)               |
 
 
 #### Example
 
 ```yaml
-link:
-    - config: ~/.config 
-      path: ~/.dotfiles/config/ # Will link all files into ~/.config
-      relink: true
+some_group:
+    link:
+        - config: ~/.config 
+          path: ~/.dotfiles/config/ # Will link all files into ~/.config
+          relink: true
 ```
 
-### Packages
-The `packages` section is responsible for installing the programs. You can also have the `link` session and already install the configuration files together.
+### Package
+The `package` is responsible for installing the programs. You can also have the `link` session and already install the configuration files together.
 
 #### Format
 | Parameter | Description                                  |
 | --------- | ---------------------------------------------|
 | name      | Name of the package.                         |
-| link      | [Link](#Link) session.                    |
-| group     | Group name to agroup configs (Default empty) |
 
 
 #### Example
 ```yaml
-packages:
-    - name: neovim
-      link:
-          config: ~/.config/nvim/ 
-          path: /~/.dotfiles/config/nvim
-      group: dev
+some_group:
+    package:
+        - name: neovim
 ```
 
 ## Usage
