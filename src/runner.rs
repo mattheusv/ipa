@@ -218,7 +218,7 @@ gui:
         let pacman = FakePacman::new();
         let ipa = Ipa::new(config, &pacman);
 
-        ipa.setup_group("gui").unwrap();
+        ipa.setup_except_group("dev").unwrap();
 
         assert_eq!(1, pacman.installed_packages.borrow().len());
     }
