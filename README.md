@@ -86,7 +86,7 @@ some_group:
 ```
 
 ### Package
-The `package` is responsible for installing the programs. You can also have the `link` session and already install the configuration files together.
+The `package` is responsible for installing the programs.
 
 #### Format
 | Parameter | Description                                  |
