@@ -6,15 +6,16 @@ use std::path::Path;
 use config::{Config, SymLink, Values};
 use error::IpaError;
 
-pub struct Ipa<'a, P: PackageManagement> {
-    config: Config,
-    pacman: &'a P,
-}
-
-fn new_path<'a>(s: &str, out: &'a mut String) -> Result<&'a Path, IpaError> {
+// Convert a path like `~/some/path/in/home` to `/home/user/some/path/in/home`
+fn expand_path<'a>(s: &str, out: &'a mut String) -> Result<&'a Path, IpaError> {
     let path = shellexpand::full(s)?;
     out.push_str(path.as_ref());
     Ok(Path::new(out))
+}
+
+pub struct Ipa<'a, P: PackageManagement> {
+    config: Config,
+    pacman: &'a P,
 }
 
 impl<'a, P> Ipa<'a, P>
@@ -76,8 +77,8 @@ where
         let mut src = String::new();
         let mut dst = String::new();
         self.symlink(
-            new_path(&link.path, &mut src)?,
-            new_path(&link.config, &mut dst)?,
+            expand_path(&link.path, &mut src)?,
+            expand_path(&link.config, &mut dst)?,
             link.relink,
         )
     }
