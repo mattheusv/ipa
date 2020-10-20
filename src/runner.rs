@@ -1,17 +1,8 @@
-use super::{config, error, PackageManagement};
-use std::fs;
-use std::os::unix;
-use std::path::Path;
+use super::{config, error, symlink, PackageManagement};
 
-use config::{Config, SymLink, Values};
+use config::{Config, Values};
 use error::IpaError;
-
-// Convert a path like `~/some/path/in/home` to `/home/user/some/path/in/home`
-fn expand_path<'a>(s: &str, out: &'a mut String) -> Result<&'a Path, IpaError> {
-    let path = shellexpand::full(s)?;
-    out.push_str(path.as_ref());
-    Ok(Path::new(out))
-}
+use symlink::symlink;
 
 pub struct Ipa<'a, P: PackageManagement> {
     config: Config,
@@ -65,62 +56,7 @@ where
         }
 
         if let Some(ref link) = value.link {
-            self.process_link(link)?;
-        }
-        Ok(())
-    }
-
-    fn process_link(&self, link: &SymLink) -> Result<(), IpaError> {
-        let mut src = String::new();
-        let mut dst = String::new();
-        self.symlink(
-            expand_path(&link.path, &mut src)?,
-            expand_path(&link.config, &mut dst)?,
-            link.relink,
-        )
-    }
-    fn symlink(&self, src: &Path, dst: &Path, relink: bool) -> Result<(), IpaError> {
-        if src.is_dir() && dst.is_dir() {
-            return self.symlink_dir(src, dst, relink);
-        }
-
-        if dst.exists() {
-            if !relink {
-                println!("Symbolic link {:?} already exists", dst);
-                return Ok(());
-            }
-            println!("Relinking {:?}", dst);
-            fs::remove_file(dst)?;
-        }
-
-        println!("Linking {:?} in {:?}", src, dst);
-        unix::fs::symlink(src, dst)?;
-        Ok(())
-    }
-
-    fn symlink_dir(&self, src: &Path, dst: &Path, relink: bool) -> Result<(), IpaError> {
-        println!("Create symbolic link to all files into {:?}", src);
-        for entry in fs::read_dir(src)? {
-            let entry = entry?;
-
-            // The first entry of iterator is src path
-            if entry.path() == src {
-                continue;
-            }
-
-            if entry.path().is_dir() {
-                if let Some(name) = entry.path().file_name() {
-                    let dst_dir = dst.join(name);
-                    if !dst_dir.exists() {
-                        fs::create_dir(&dst_dir)?;
-                    }
-                    self.symlink_dir(entry.path().as_path(), dst_dir.as_path(), relink)?;
-                }
-            } else {
-                if let Some(name) = entry.path().file_name() {
-                    self.symlink(entry.path().as_path(), dst.join(name).as_path(), relink)?;
-                }
-            }
+            symlink(link)?;
         }
         Ok(())
     }
@@ -222,43 +158,7 @@ gui:
     }
 
     #[test]
-    fn test_relink_links() {
-        let src_dir = tempdir().unwrap();
-        let dst_dir = tempdir().unwrap();
-
-        let src_path_config = src_dir.path().join("src");
-        std::fs::File::create(&src_path_config).unwrap();
-
-        let dst_path_config = dst_dir.path().join("dst");
-        std::fs::File::create(&dst_path_config).unwrap();
-
-        let content = format!(
-            "
-dev:
-  - link:
-      config: {:?}
-      path: {:?}
-      relink: true
-",
-            dst_path_config, src_path_config,
-        );
-
-        let config = Config::new(&content).unwrap();
-        let pacman = FakePacman::new();
-        let ipa = Ipa::new(config, &pacman);
-
-        ipa.setup().unwrap();
-
-        let is_symlink = std::fs::symlink_metadata(dst_path_config.as_path())
-            .unwrap()
-            .file_type()
-            .is_symlink();
-
-        assert_eq!(true, is_symlink);
-    }
-
-    #[test]
-    fn test_links() {
+    fn test_link() {
         let src_dir = tempdir().unwrap();
         let dst_dir = tempdir().unwrap();
 
