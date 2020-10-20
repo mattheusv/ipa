@@ -60,9 +60,6 @@ where
 
     fn process_value(&self, value: &Values) -> Result<(), IpaError> {
         if let Some(ref package) = value.package {
-            if package.name.is_empty() {
-                return Err(IpaError::InvalidPackage);
-            }
             println!("Installing package {}", package.name);
             self.pacman.install(&package.name)?;
         }
