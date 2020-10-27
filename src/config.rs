@@ -15,10 +15,10 @@ pub struct SymLink {
 }
 
 impl SymLink {
-    pub fn new(config: &str, path: &str, relink: bool) -> Self {
+    pub fn new(dst: &str, src: &str, relink: bool) -> Self {
         SymLink {
-            config: config.to_string(),
-            path: path.to_string(),
+            config: dst.to_string(),
+            path: src.to_string(),
             relink,
         }
     }
