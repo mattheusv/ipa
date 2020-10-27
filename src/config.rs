@@ -42,11 +42,20 @@ impl Package {
 pub struct Values {
     pub package: Option<Package>,
     pub link: Option<SymLink>,
+    pub sheel: Option<Vec<String>>,
 }
 
 impl Values {
-    pub fn new(package: Option<Package>, link: Option<SymLink>) -> Self {
-        Values { package, link }
+    pub fn new(
+        package: Option<Package>,
+        link: Option<SymLink>,
+        sheel: Option<Vec<String>>,
+    ) -> Self {
+        Values {
+            package,
+            link,
+            sheel,
+        }
     }
 }
 
@@ -78,6 +87,9 @@ gui:
   - link:
       config: foo/bar
       path: foo/baz
+    sheel:
+      - echo
+      - foo
     package:
       name: neovim
   - package:
@@ -97,8 +109,9 @@ dev:
                 Values::new(
                     Some(Package::new("neovim")),
                     Some(SymLink::new("foo/bar", "foo/baz", false)),
+                    Some(vec![String::from("echo"), String::from("foo")]),
                 ),
-                Values::new(Some(Package::new("alacritty")), None),
+                Values::new(Some(Package::new("alacritty")), None, None),
             ],
         );
         values.insert(
@@ -106,6 +119,7 @@ dev:
             vec![Values::new(
                 None,
                 Some(SymLink::new("bar/foo", "baz/foo", true)),
+                None,
             )],
         );
 

@@ -8,6 +8,7 @@ pub enum IpaError {
     InvalidConfig(serde_yaml::Error),
     InvalidPath(LookupError<VarError>),
     InvalidGroup,
+    EmptyCommand,
 }
 
 impl std::fmt::Display for IpaError {
@@ -17,6 +18,7 @@ impl std::fmt::Display for IpaError {
             IpaError::InvalidConfig(e) => write!(f, "Invalid config: {}", e),
             IpaError::InvalidPath(e) => write!(f, "Invalid path: {}", e),
             IpaError::InvalidGroup => write!(f, "Invalid group name"),
+            IpaError::EmptyCommand => write!(f, "Empty command to execute"),
         }
     }
 }
