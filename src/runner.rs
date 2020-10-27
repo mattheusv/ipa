@@ -51,7 +51,6 @@ where
 
     fn process_value(&self, value: &Values) -> Result<(), IpaError> {
         if let Some(ref package) = value.package {
-            println!("Installing package {}", package.name);
             self.pacman.install(&package.name)?;
         }
 
