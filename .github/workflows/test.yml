@@ -14,6 +14,7 @@ jobs:
     container:
       image: samip537/archlinux:devel
     steps:
+      - run: pacman -Sy
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
