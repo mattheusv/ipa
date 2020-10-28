@@ -171,8 +171,8 @@ gui:
             "
 dev:
     - link:
-        config: {:?}
-        path: {:?}
+        dst: {:?}
+        src: {:?}
 ",
             dst_dir.path(),
             src_dir.path(),

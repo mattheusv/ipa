@@ -6,9 +6,9 @@ use std::path::Path;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct SymLink {
-    pub config: String,
+    pub dst: String,
 
-    pub path: String,
+    pub src: String,
 
     #[serde(default)]
     pub relink: bool,
@@ -17,8 +17,8 @@ pub struct SymLink {
 impl SymLink {
     pub fn new(dst: &str, src: &str, relink: bool) -> Self {
         SymLink {
-            config: dst.to_string(),
-            path: src.to_string(),
+            dst: dst.to_string(),
+            src: src.to_string(),
             relink,
         }
     }
@@ -85,8 +85,8 @@ mod tests {
         let content = "
 gui:
   - link:
-      config: foo/bar
-      path: foo/baz
+      dst: foo/bar
+      src: foo/baz
     sheel:
       - echo
       - foo
@@ -97,8 +97,8 @@ gui:
 
 dev:
   - link:
-      config: bar/foo
-      path: baz/foo
+      dst: bar/foo
+      src: baz/foo
       relink: true
 ";
         let config = Config::new(&content).unwrap();

@@ -7,8 +7,8 @@ pub fn symlink(link: &SymLink) -> Result<(), IpaError> {
     let mut src = String::new();
     let mut dst = String::new();
     symlink_path(
-        expand_path(&link.path, &mut src)?,
-        expand_path(&link.config, &mut dst)?,
+        expand_path(&link.src, &mut src)?,
+        expand_path(&link.dst, &mut dst)?,
         link.relink,
     )
 }
