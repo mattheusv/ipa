@@ -10,7 +10,7 @@ impl Pacman {
         Pacman { bin: "pacman" }
     }
 
-    fn is_installed(&self, package: &str) -> std::io::Result<bool> {
+    pub fn is_installed(&self, package: &str) -> std::io::Result<bool> {
         Ok(Command::new(self.bin)
             .arg("-Qe")
             .arg(package)
