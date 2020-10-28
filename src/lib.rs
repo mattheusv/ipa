@@ -1,5 +1,7 @@
+pub mod cli;
 pub mod config;
 pub mod error;
+pub mod pacman;
 pub mod runner;
 pub mod sheel;
 pub mod symlink;

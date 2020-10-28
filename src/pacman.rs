@@ -1,4 +1,4 @@
-use ipa::{error, PackageManagement};
+use super::{error, PackageManagement};
 use std::process::{Command, Stdio};
 
 pub struct Pacman {

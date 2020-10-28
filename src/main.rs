@@ -1,6 +1,4 @@
-use ipa::{config, error, runner};
-mod cli;
-mod pacman;
+use ipa::{cli, config, error, pacman, runner};
 
 use cli::Options;
 use config::Config;
