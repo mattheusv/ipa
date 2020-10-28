@@ -1,0 +1,22 @@
+dev:
+  - package:
+      name: fzf
+
+  - package:
+      name: tmux
+    sheel:
+        - git
+        - clone
+        - https://github.com/tmux-plugins/tpm
+        - /tmp/tmux-plugins
+ 
+  - link:
+      config: /tmp/bashrc.tmp
+      path: ~/.bashrc
+
+gui:
+    - sheel:
+        - git
+        - clone
+        - https://github.com/vivien/i3blocks-contrib
+        - /tmp/i3blocks
