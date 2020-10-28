@@ -11,8 +11,8 @@ dev:
         - /tmp/tmux-plugins
  
   - link:
-      config: /tmp/bashrc.tmp
-      path: ~/.bashrc
+      config: /tmp/dst.txt
+      path: /tmp/src.txt
 
 gui:
     - sheel:
