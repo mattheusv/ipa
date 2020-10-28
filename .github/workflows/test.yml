@@ -8,8 +8,8 @@ on:
       - ".gitignore"
 
 jobs:
-  test:
-    name: Test ipa
+  test-pacman:
+    name: Test ipa Arch Linux
     runs-on: ubuntu-latest
     container:
       image: samip537/archlinux:devel
