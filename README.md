@@ -1,4 +1,6 @@
-# ipa ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/msAlcantara/ipa/Test)
+# ipa
+
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/msAlcantara/ipa/Test) ![License](https://img.shields.io/github/license/msAlcantara/ipa)
 
 Ipa is another dotfiles manager, that can be used to **install and configure** (only to Arch Linux installation for now) programs using a configuration file.
 
