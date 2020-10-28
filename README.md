@@ -35,25 +35,25 @@ The configuration file is divided between groups, so you can create groups of co
 ``` yaml
 gui: # group gui
   - link:
-      config: ~/.config/i3blocks/config
-      path: ~/.dotfiles/config/i3blocks/config
+      src: ~/.dotfiles/config/i3blocks/config
+      dst: ~/.config/i3blocks/config
 
   - package:
       name: i3
     link:
-      config: ~/.config/i3/config
-      path: ~/.dotfiles/config/i3/config
+      src: ~/.dotfiles/config/i3/config
+      dst: ~/.config/i3/config
 
 dev: # group dev
   - link:
-      config: ~/.gitconfig
-      path: ~/.dotfiles/config/git/gitconfig
+      src: ~/.dotfiles/config/git/gitconfig
+      dst: ~/.gitconfig
       relink: true
   - package:
       name: neovim
     link:
-      config: ~/.config/nvim/
-      path: /~/.dotfiles/config/nvim
+      src: /~/.dotfiles/config/nvim
+      dst: ~/.config/nvim/
       relink: true
 ```
 
@@ -70,8 +70,8 @@ The `link` is responsible for creating symbolically links. If necessary, items c
 
 | Parameter | Description                                                |
 | --------- | -----------------------------------------------------------|
-| config    | Destination config file to be created.                     |
-| path      | Source of config file to create a symbolically link.       |
+| src       | Source of config file to create a symbolically link.       |
+| dst       | Destination config file to be created.                     |
 | relink    | Force overwriting file if allready exists (Default false). |
 
 
@@ -80,8 +80,8 @@ The `link` is responsible for creating symbolically links. If necessary, items c
 ```yaml
 some_group:
     link:
-        - config: ~/.config 
-          path: ~/.dotfiles/config/ # Will link all files into ~/.config
+        - src: ~/.dotfiles/config/ # Will link all files into ~/.config
+          dst: ~/.config
           relink: true
 ```
 
