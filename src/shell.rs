@@ -1,6 +1,20 @@
-use super::config::Shell;
 use super::error::IpaError;
+use serde::{Deserialize, Serialize};
 use std::process::{Command, Output};
+
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+pub struct Shell {
+    #[serde(default)]
+    pub command: String,
+}
+
+impl Shell {
+    pub fn new(command: &str) -> Self {
+        Shell {
+            command: command.to_string(),
+        }
+    }
+}
 
 pub fn execute(shell: &Shell) -> Result<Output, IpaError> {
     println!("Executing command: {}", shell.command);

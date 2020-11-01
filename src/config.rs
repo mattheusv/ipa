@@ -1,4 +1,4 @@
-use super::{symlink::SymLink, IpaError};
+use super::{shell::Shell, symlink::SymLink, IpaError};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
@@ -14,20 +14,6 @@ impl Package {
     pub fn new(name: &str) -> Self {
         Package {
             name: name.to_string(),
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
-pub struct Shell {
-    #[serde(default)]
-    pub command: String,
-}
-
-impl Shell {
-    pub fn new(command: &str) -> Self {
-        Shell {
-            command: command.to_string(),
         }
     }
 }
