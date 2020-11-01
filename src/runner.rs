@@ -1,4 +1,4 @@
-use super::{config, error, sheel, symlink, PackageManagement};
+use super::{config, error, shell, symlink, PackageManagement};
 
 use config::{Config, Values};
 use error::IpaError;
@@ -58,8 +58,8 @@ where
             symlink(link)?;
         }
 
-        if let Some(ref commands) = value.sheel {
-            sheel::execute(commands)?;
+        if let Some(ref commands) = value.shell {
+            shell::execute(commands)?;
         }
         Ok(())
     }

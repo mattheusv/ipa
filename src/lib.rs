@@ -3,7 +3,7 @@ pub mod config;
 pub mod error;
 pub mod pacman;
 pub mod runner;
-pub mod sheel;
+pub mod shell;
 pub mod symlink;
 
 use error::IpaError;

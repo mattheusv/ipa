@@ -42,19 +42,19 @@ impl Package {
 pub struct Values {
     pub package: Option<Package>,
     pub link: Option<SymLink>,
-    pub sheel: Option<Vec<String>>,
+    pub shell: Option<Vec<String>>,
 }
 
 impl Values {
     pub fn new(
         package: Option<Package>,
         link: Option<SymLink>,
-        sheel: Option<Vec<String>>,
+        shell: Option<Vec<String>>,
     ) -> Self {
         Values {
             package,
             link,
-            sheel,
+            shell,
         }
     }
 }
@@ -87,7 +87,7 @@ gui:
   - link:
       dst: foo/bar
       src: foo/baz
-    sheel:
+    shell:
       - echo
       - foo
     package:
