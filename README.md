@@ -46,17 +46,29 @@ gui: # group gui
       src: ~/.dotfiles/config/i3/config
       dst: ~/.config/i3/config
 
+  - shell:
+      command: git clone https://github.com/vivien/i3blocks-contrib ~/.config/i3blocks/
+
 dev: # group dev
   - link:
       src: ~/.dotfiles/config/git/gitconfig
       dst: ~/.gitconfig
       relink: true
+
   - package:
       name: neovim
     link:
       src: /~/.dotfiles/config/nvim
       dst: ~/.config/nvim/
       relink: true
+
+    - package:
+        name: tmux
+      link:
+          src: ~/.dotfiles/tmux/tmux.conf
+          dst: ~/.tmux.conf
+      shell:
+          command: git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 ```
 
 Ipa will search for file called `config.yml` on the root of directory, so you can just call `ipa`, but, you can use the flag `-f` too specify a custom file name.
@@ -66,15 +78,16 @@ Ipa will search for file called `config.yml` on the root of directory, so you ca
 You can configure ipa to install packages and create symbolic links of your config files.
 
 #### Link
-The `link` is responsible for creating symbolically links. If necessary, items can be configured to be relinked, overwriting the current files. Environment variables are automatically expanded if used.
+The `link` is responsible for creating symbolically links. If necessary, items can be configured to be relinked, overwriting the current files. Environment variables are automatically expanded if used. If the directory of destination file does not exists, ipa will create automatically, if you want disable this behaviour you can disable with `create: false`
 
 #### Format
 
-| Parameter | Description                                                |
-| --------- | -----------------------------------------------------------|
-| src       | Source of config file to create a symbolically link.       |
-| dst       | Destination config file to be created.                     |
-| relink    | Force overwriting file if allready exists (Default false). |
+| Parameter | Description                                                    |
+| --------- | ---------------------------------------------------------------|
+| src       | Source of config file to create a symbolically link.           |
+| dst       | Destination config file to be created.                         |
+| relink    | Force overwriting file if allready exists (Default false).     |
+| create    | Create sub directory in dst path if not exists (Default true). |
 
 
 #### Example
@@ -101,6 +114,22 @@ The `package` is responsible for installing the programs.
 some_group:
     package:
         - name: neovim
+```
+
+### Shell
+The `shell` is responsible to execute bash scripts
+
+#### Format
+| Parameter | Description              |
+| --------- | -------------------------|
+| command   | Bash command to execute. |
+
+
+#### Example
+```yaml
+some_group:
+    shell:
+        - command: nvim +PlugInstall +qall
 ```
 
 ## Usage
