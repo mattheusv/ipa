@@ -1,6 +1,6 @@
 use ipa::{config, pacman, runner};
 use std::env::current_dir;
-use std::fs::File;
+use std::fs::{remove_dir_all, remove_file, File};
 use std::io::prelude::*;
 use std::path::Path;
 
@@ -25,4 +25,9 @@ fn test_setup_pacman() {
     assert!(Path::new("/tmp/dst.txt").exists());
     assert!(Path::new("/tmp/tmux-plugins/").exists());
     assert!(Path::new("/tmp/i3blocks/").exists());
+
+    // Clean files
+    remove_file("/tmp/dst.txt").unwrap();
+    remove_dir_all("/tmp/tmux-plugins/").unwrap();
+    remove_dir_all("/tmp/i3blocks/").unwrap();
 }
