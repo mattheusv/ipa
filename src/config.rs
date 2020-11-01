@@ -39,18 +39,28 @@ impl Package {
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
+pub struct Shell {
+    #[serde(default)]
+    pub command: String,
+}
+
+impl Shell {
+    pub fn new(command: &str) -> Self {
+        Shell {
+            command: command.to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct Values {
     pub package: Option<Package>,
     pub link: Option<SymLink>,
-    pub shell: Option<Vec<String>>,
+    pub shell: Option<Shell>,
 }
 
 impl Values {
-    pub fn new(
-        package: Option<Package>,
-        link: Option<SymLink>,
-        shell: Option<Vec<String>>,
-    ) -> Self {
+    pub fn new(package: Option<Package>, link: Option<SymLink>, shell: Option<Shell>) -> Self {
         Values {
             package,
             link,
@@ -88,8 +98,7 @@ gui:
       dst: foo/bar
       src: foo/baz
     shell:
-      - echo
-      - foo
+      command: echo foo
     package:
       name: neovim
   - package:
@@ -109,7 +118,7 @@ dev:
                 Values::new(
                     Some(Package::new("neovim")),
                     Some(SymLink::new("foo/bar", "foo/baz", false)),
-                    Some(vec![String::from("echo"), String::from("foo")]),
+                    Some(Shell::new("echo foo")),
                 ),
                 Values::new(Some(Package::new("alacritty")), None, None),
             ],

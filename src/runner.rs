@@ -58,8 +58,8 @@ where
             symlink(link)?;
         }
 
-        if let Some(ref commands) = value.shell {
-            shell::execute(commands)?;
+        if let Some(ref shell) = value.shell {
+            shell::execute(&shell)?;
         }
         Ok(())
     }

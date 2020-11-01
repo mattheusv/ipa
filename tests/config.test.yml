@@ -5,10 +5,7 @@ dev:
   - package:
       name: tmux
     shell:
-        - git
-        - clone
-        - https://github.com/tmux-plugins/tpm
-        - /tmp/tmux-plugins
+        command: git clone https://github.com/tmux-plugins/tpm /tmp/tmux-plugins
  
   - link:
       dst: /tmp/dst.txt
@@ -16,7 +13,4 @@ dev:
 
 gui:
     - shell:
-        - git
-        - clone
-        - https://github.com/vivien/i3blocks-contrib
-        - /tmp/i3blocks
+        command: git clone https://github.com/vivien/i3blocks-contrib /tmp/i3blocks
