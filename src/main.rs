@@ -21,6 +21,7 @@ fn main() {
         eprintln!("Unrecoverable error: {}", err);
         std::process::exit(1);
     }
+    println!("Finish with successfull, see you next time.");
 }
 
 fn run(options: Options, config: Config) -> Result<(), IpaError> {
