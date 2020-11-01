@@ -1,8 +1,8 @@
 use super::error::IpaError;
 use serde::{Deserialize, Serialize};
-use std::fs;
 use std::os::unix;
 use std::path::Path;
+use std::{fs, io};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct SymLink {
@@ -12,14 +12,18 @@ pub struct SymLink {
 
     #[serde(default)]
     pub relink: bool,
+
+    #[serde(default = "default_create")]
+    pub create: bool,
 }
 
 impl SymLink {
-    pub fn new(dst: &str, src: &str, relink: bool) -> Self {
+    pub fn new(dst: &str, src: &str, relink: bool, create: bool) -> Self {
         SymLink {
             dst: dst.to_string(),
             src: src.to_string(),
             relink,
+            create,
         }
     }
 }
@@ -31,12 +35,20 @@ pub fn symlink(link: &SymLink) -> Result<(), IpaError> {
         expand_path(&link.src, &mut src)?,
         expand_path(&link.dst, &mut dst)?,
         link.relink,
+        link.create,
     )
 }
 
-fn symlink_path(src: &Path, dst: &Path, relink: bool) -> Result<(), IpaError> {
+fn symlink_path(src: &Path, dst: &Path, relink: bool, create: bool) -> Result<(), IpaError> {
+    if !src.exists() {
+        return Err(IpaError::Io(io::Error::new(
+            io::ErrorKind::NotFound,
+            "source file of link does not exists",
+        )));
+    }
+
     if src.is_dir() && dst.is_dir() {
-        return symlink_dir(src, dst, relink);
+        return symlink_dir(src, dst, relink, create);
     }
 
     if dst.exists() {
@@ -48,12 +60,21 @@ fn symlink_path(src: &Path, dst: &Path, relink: bool) -> Result<(), IpaError> {
         fs::remove_file(dst)?;
     }
 
+    if create {
+        if let Some(parent) = dst.parent() {
+            if !parent.exists() {
+                println!("Create destination sub directory {:?}", parent);
+                fs::create_dir_all(parent)?;
+            }
+        }
+    }
+
     println!("Linking {:?} in {:?}", src, dst);
     unix::fs::symlink(src, dst)?;
     Ok(())
 }
 
-fn symlink_dir(src: &Path, dst: &Path, relink: bool) -> Result<(), IpaError> {
+fn symlink_dir(src: &Path, dst: &Path, relink: bool, create: bool) -> Result<(), IpaError> {
     println!("Create symbolic link to all files into {:?}", src);
     for entry in fs::read_dir(src)? {
         let entry = entry?;
@@ -69,11 +90,16 @@ fn symlink_dir(src: &Path, dst: &Path, relink: bool) -> Result<(), IpaError> {
                 if !dst_dir.exists() {
                     fs::create_dir(&dst_dir)?;
                 }
-                symlink_dir(entry.path().as_path(), dst_dir.as_path(), relink)?;
+                symlink_dir(entry.path().as_path(), dst_dir.as_path(), relink, create)?;
             }
         } else {
             if let Some(name) = entry.path().file_name() {
-                symlink_path(entry.path().as_path(), dst.join(name).as_path(), relink)?;
+                symlink_path(
+                    entry.path().as_path(),
+                    dst.join(name).as_path(),
+                    relink,
+                    create,
+                )?;
             }
         }
     }
@@ -87,10 +113,40 @@ fn expand_path<'a>(s: &str, out: &'a mut String) -> Result<&'a Path, IpaError> {
     Ok(Path::new(out))
 }
 
+fn default_create() -> bool {
+    true
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use tempfile::tempdir;
+
+    #[test]
+    fn test_create_dst_subdirectory() {
+        let src_dir = tempdir().unwrap();
+        let dst_dir = tempdir().unwrap();
+
+        let src_path_config = src_dir.path().join("src");
+        std::fs::File::create(&src_path_config).unwrap();
+
+        let dst_path_config = dst_dir.path().join("dst/").join("file");
+
+        let link = SymLink::new(
+            &dst_path_config.to_str().unwrap(),
+            &src_path_config.to_str().unwrap(),
+            true,
+            true,
+        );
+
+        assert!(symlink(&link).is_ok());
+    }
+
+    #[test]
+    fn test_src_file_not_exist() {
+        let link = SymLink::new("/tmp/src-invalid", "/tmp/dst-invalid", false, false);
+        assert!(symlink(&link).is_err());
+    }
 
     #[test]
     fn test_link_dir() {
@@ -104,6 +160,7 @@ mod tests {
             &dst_dir.path().to_str().unwrap(),
             &src_dir.path().to_str().unwrap(),
             true,
+            false,
         );
 
         symlink(&link).unwrap();
@@ -132,6 +189,7 @@ mod tests {
             &dst_path_config.to_str().unwrap(),
             &src_path_config.to_str().unwrap(),
             true,
+            false,
         );
 
         symlink(&link).unwrap();
@@ -158,6 +216,7 @@ mod tests {
         let link = SymLink::new(
             &dst_path_config.to_str().unwrap(),
             &src_path_config.to_str().unwrap(),
+            false,
             false,
         );
 

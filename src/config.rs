@@ -83,7 +83,7 @@ dev:
             vec![
                 Values::new(
                     Some(Package::new("neovim")),
-                    Some(SymLink::new("foo/bar", "foo/baz", false)),
+                    Some(SymLink::new("foo/bar", "foo/baz", false, true)),
                     Some(Shell::new("echo foo")),
                 ),
                 Values::new(Some(Package::new("alacritty")), None, None),
@@ -93,7 +93,7 @@ dev:
             String::from("dev"),
             vec![Values::new(
                 None,
-                Some(SymLink::new("bar/foo", "baz/foo", true)),
+                Some(SymLink::new("bar/foo", "baz/foo", true, true)),
                 None,
             )],
         );
