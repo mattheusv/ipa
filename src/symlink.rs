@@ -1,7 +1,28 @@
-use super::{config::SymLink, error::IpaError};
+use super::error::IpaError;
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::os::unix;
 use std::path::Path;
+
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+pub struct SymLink {
+    pub dst: String,
+
+    pub src: String,
+
+    #[serde(default)]
+    pub relink: bool,
+}
+
+impl SymLink {
+    pub fn new(dst: &str, src: &str, relink: bool) -> Self {
+        SymLink {
+            dst: dst.to_string(),
+            src: src.to_string(),
+            relink,
+        }
+    }
+}
 
 pub fn symlink(link: &SymLink) -> Result<(), IpaError> {
     let mut src = String::new();
