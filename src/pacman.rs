@@ -33,6 +33,7 @@ impl PackageManagement for Pacman {
             .arg(package)
             .arg("--noconfirm")
             .arg("--quiet")
+            .stdout(Stdio::null())
             .status()?;
         Ok(())
     }
