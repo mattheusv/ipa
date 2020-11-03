@@ -1,0 +1,30 @@
+name: Release
+
+on:
+  create:
+    tags:
+      - v*.*.*
+
+jobs:
+  release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+
+      - run: zip -j ipa.zip target/release/ipa
+
+      - name: Upload binary to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref }}
+          file: ipa.zip
+          asset_name: ipa-$tag.zip
+          overwrite: true
+
