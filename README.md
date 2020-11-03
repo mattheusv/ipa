@@ -1,6 +1,6 @@
 # ipa
 
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/msAlcantara/ipa/Test) ![License](https://img.shields.io/github/license/msAlcantara/ipa)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/msAlcantara/ipa/Test) ![License](https://img.shields.io/github/license/msAlcantara/ipa) ![Lastest Version](https://img.shields.io/github/v/release/msalcantara/ipa)
 
 Ipa is another dotfiles manager, that can be used to **install and configure** (only to Arch Linux installation for now) programs using a configuration file.
 
@@ -9,24 +9,9 @@ Ipa is another dotfiles manager, that can be used to **install and configure** (
 
 The principal motivation with this project is to learn about Rust development and create a tool that can be used.
 
-## Status
+### Installation
 
-**In Development use with caution.**
-
-### Instalation
-
-For now, to install this tool you'll need the [Cargo](https://doc.rust-lang.org/cargo/) installed.
-
-```bash
-$ cargo install --git https://github.com/msAlcantara/ipa/
-```
-
-Make sure the installation has been completed successfully.
-
-```bash
-$ ipa --help
-```
-
+You can install ipa using prebuilt binaries from [GitHub release page](https://github.com/msAlcantara/ipa/releases/latest). Make sure that **glibc** is installed
 
 ## Configuration
 Ipa use a yaml configuration file that you can describe all packages and config files that you want to install.
