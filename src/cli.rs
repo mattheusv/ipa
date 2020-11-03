@@ -19,29 +19,30 @@ impl Default for Options {
 
 impl Options {
     pub fn new() -> Self {
-        let matches = App::new("ipa")
-            .arg(
-                Arg::with_name("file")
-                    .long("file")
-                    .short("f")
-                    .required(false)
-                    .takes_value(true),
-            )
-            .arg(
-                Arg::with_name("only-group")
-                    .value_name("group")
-                    .long("only")
-                    .required(false)
-                    .takes_value(true),
-            )
-            .arg(
-                Arg::with_name("except-group")
-                    .value_name("group")
-                    .long("except")
-                    .required(false)
-                    .takes_value(true),
-            )
-            .get_matches();
+        let matches =
+            App::new("ipa another dotfiles manager that can install and configure your packages")
+                .arg(
+                    Arg::with_name("file")
+                        .long("file")
+                        .short("f")
+                        .required(false)
+                        .takes_value(true),
+                )
+                .arg(
+                    Arg::with_name("only-group")
+                        .value_name("group")
+                        .long("only")
+                        .required(false)
+                        .takes_value(true),
+                )
+                .arg(
+                    Arg::with_name("except-group")
+                        .value_name("group")
+                        .long("except")
+                        .required(false)
+                        .takes_value(true),
+                )
+                .get_matches();
 
         let mut options = Options::default();
 
