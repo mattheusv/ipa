@@ -5,6 +5,8 @@ pub struct Options {
     pub config_file: PathBuf,
     pub only_group: Option<String>,
     pub except_group: Option<String>,
+    pub verbose: usize,
+    pub quiet: bool,
 }
 
 impl Default for Options {
@@ -13,6 +15,8 @@ impl Default for Options {
             config_file: PathBuf::from("config.yml"),
             only_group: None,
             except_group: None,
+            verbose: 0,
+            quiet: false,
         }
     }
 }
@@ -44,6 +48,17 @@ impl Options {
                     .required(false)
                     .takes_value(true),
             )
+            .arg(
+                Arg::with_name("verbose")
+                    .short("v")
+                    .multiple(true)
+                    .help("Increase message verbosity. -v -vv"),
+            )
+            .arg(
+                Arg::with_name("quiet")
+                    .short("q")
+                    .help("Silence all output"),
+            )
             .get_matches();
 
         let mut options = Options::default();
@@ -59,6 +74,11 @@ impl Options {
         if let Some(except_group) = matches.value_of("except-group") {
             options.except_group = Some(except_group.to_owned());
         }
+
+        // Enable Info level by default
+        options.verbose = matches.occurrences_of("verbose") as usize + 2;
+
+        options.quiet = matches.is_present("quiet");
 
         options
     }

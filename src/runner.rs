@@ -1,4 +1,5 @@
 use super::{config, error, shell, symlink, PackageManagement};
+use log::info;
 
 use config::{Config, Values};
 use error::IpaError;
@@ -20,7 +21,7 @@ where
     pub fn setup_except_group(&self, group: &str) -> Result<(), IpaError> {
         for (g, values) in self.config.values.iter() {
             if g != group {
-                println!("Configuring values of group {}", group);
+                info!("Configuring values of group {}", group);
                 self.process(values)?;
             }
         }
@@ -29,6 +30,7 @@ where
 
     pub fn setup_group(&self, group: &str) -> Result<(), IpaError> {
         if let Some(values) = self.config.values.get(group) {
+            info!("Configuring values of group {}", group);
             return self.process(&values);
         }
         Err(IpaError::InvalidGroup)
@@ -36,7 +38,7 @@ where
 
     pub fn setup(&self) -> Result<(), IpaError> {
         for (group, values) in self.config.values.iter() {
-            println!("Configuring values of group {}", group);
+            info!("Configuring values of group {}", group);
             self.process(values)?;
         }
         Ok(())

@@ -1,4 +1,5 @@
 use super::error::IpaError;
+use log::{debug, warn};
 use serde::{Deserialize, Serialize};
 use std::os::unix;
 use std::path::Path;
@@ -53,29 +54,29 @@ fn symlink_path(src: &Path, dst: &Path, relink: bool, create: bool) -> Result<()
 
     if dst.exists() {
         if !relink {
-            println!("Symbolic link {:?} already exists", dst);
+            warn!("Symbolic link {:?} already exists", dst);
             return Ok(());
         }
-        println!("Relinking {:?}", dst);
+        warn!("Relinking {:?}", dst);
         fs::remove_file(dst)?;
     }
 
     if create {
         if let Some(parent) = dst.parent() {
             if !parent.exists() {
-                println!("Create destination sub directory {:?}", parent);
+                debug!("Create destination sub directory {:?}", parent);
                 fs::create_dir_all(parent)?;
             }
         }
     }
 
-    println!("Linking {:?} in {:?}", src, dst);
+    debug!("Linking {:?} in {:?}", src, dst);
     unix::fs::symlink(src, dst)?;
     Ok(())
 }
 
 fn symlink_dir(src: &Path, dst: &Path, relink: bool, create: bool) -> Result<(), IpaError> {
-    println!("Create symbolic link to all files into {:?}", src);
+    debug!("Create symbolic link to all files into {:?}", src);
     for entry in fs::read_dir(src)? {
         let entry = entry?;
 

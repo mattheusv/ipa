@@ -1,4 +1,5 @@
 use super::{error, PackageManagement};
+use log::{debug, warn};
 use std::process::{Command, Stdio};
 
 pub struct Pacman {
@@ -24,10 +25,10 @@ impl Pacman {
 impl PackageManagement for Pacman {
     fn install(&self, package: &str) -> Result<(), error::IpaError> {
         if self.is_installed(package)? {
-            println!("Package {} already installed", package);
+            warn!("Package {} already installed", package);
             return Ok(());
         }
-        println!("Installing package {}", package);
+        debug!("Installing package {}", package);
         Command::new(self.bin)
             .arg("-S")
             .arg(package)

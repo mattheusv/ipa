@@ -1,4 +1,5 @@
 use ipa::{cli, config, error, pacman, runner};
+use log::info;
 
 use cli::Options;
 use config::Config;
@@ -8,6 +9,11 @@ use runner::Ipa;
 
 fn main() {
     let options = Options::new();
+
+    if let Err(err) = init_logger(&options) {
+        eprintln!("Unrecoverable error to init logger: {}", err);
+        std::process::exit(1);
+    }
 
     let config = match Config::load(options.config_file.as_path()) {
         Ok(config) => config,
@@ -21,7 +27,16 @@ fn main() {
         eprintln!("Unrecoverable error: {}", err);
         std::process::exit(1);
     }
-    println!("Finish with successfull, see you next time.");
+    info!("Finish with successfull, see you next time.");
+}
+
+fn init_logger(options: &Options) -> Result<(), log::SetLoggerError> {
+    stderrlog::new()
+        .module(module_path!())
+        .quiet(options.quiet)
+        .verbosity(options.verbose)
+        .timestamp(stderrlog::Timestamp::Second)
+        .init()
 }
 
 fn run(options: Options, config: Config) -> Result<(), IpaError> {

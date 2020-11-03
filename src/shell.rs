@@ -1,4 +1,5 @@
 use super::error::IpaError;
+use log::debug;
 use serde::{Deserialize, Serialize};
 use std::process::{Command, Output};
 
@@ -17,7 +18,7 @@ impl Shell {
 }
 
 pub fn execute(shell: &Shell) -> Result<Output, IpaError> {
-    println!("Executing command: {}", shell.command);
+    debug!("Executing command: {}", shell.command);
     Ok(Command::new("bash")
         .arg("-c")
         .arg(&shell.command)
