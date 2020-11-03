@@ -56,7 +56,7 @@ dev: # group dev
           command: git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 ```
 
-Ipa will search for file called `config.yml` on the root of directory, so you can just call `ipa`, but, you can use the flag `-f` too specify a custom file name.
+Ipa will search for file called `dotfiles.yml` on the root of directory, so you can just call `ipa`, but, you can use the flag `-f` too specify a custom file name.
 
 
 ### Options
