@@ -12,7 +12,7 @@ pub struct Options {
 impl Default for Options {
     fn default() -> Self {
         Options {
-            config_file: PathBuf::from("config.yml"),
+            config_file: PathBuf::new(),
             only_group: None,
             except_group: None,
             verbose: 0,
@@ -32,6 +32,7 @@ impl Options {
                     .long("file")
                     .short("f")
                     .required(false)
+                    .default_value("dotfiles.yml")
                     .takes_value(true),
             )
             .arg(
