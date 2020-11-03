@@ -42,7 +42,7 @@ where
         Ok(())
     }
 
-    fn process(&self, values: &Vec<Values>) -> Result<(), IpaError> {
+    fn process(&self, values: &[Values]) -> Result<(), IpaError> {
         for value in values.iter() {
             self.process_value(value)?;
         }

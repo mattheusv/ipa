@@ -92,15 +92,13 @@ fn symlink_dir(src: &Path, dst: &Path, relink: bool, create: bool) -> Result<(),
                 }
                 symlink_dir(entry.path().as_path(), dst_dir.as_path(), relink, create)?;
             }
-        } else {
-            if let Some(name) = entry.path().file_name() {
-                symlink_path(
-                    entry.path().as_path(),
-                    dst.join(name).as_path(),
-                    relink,
-                    create,
-                )?;
-            }
+        } else if let Some(name) = entry.path().file_name() {
+            symlink_path(
+                entry.path().as_path(),
+                dst.join(name).as_path(),
+                relink,
+                create,
+            )?;
         }
     }
     Ok(())
