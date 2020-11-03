@@ -43,7 +43,7 @@ dev: # group dev
   - package:
       name: neovim
     link:
-      src: /~/.dotfiles/config/nvim
+      src: ~/.dotfiles/config/nvim
       dst: ~/.config/nvim/
       relink: true
 
