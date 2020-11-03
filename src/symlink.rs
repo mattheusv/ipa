@@ -43,7 +43,7 @@ fn symlink_path(src: &Path, dst: &Path, relink: bool, create: bool) -> Result<()
     if !src.exists() {
         return Err(IpaError::Io(io::Error::new(
             io::ErrorKind::NotFound,
-            "source file of link does not exists",
+            format!("source file of link does not exists: {:?}", src),
         )));
     }
 
