@@ -1,9 +1,11 @@
-use super::{config, error, shell, symlink, PackageManagement};
+use crate::{
+    config::{Config, Values},
+    error::IpaError,
+    shell,
+    symlink::symlink,
+    PackageManagement,
+};
 use log::info;
-
-use config::{Config, Values};
-use error::IpaError;
-use symlink::symlink;
 
 pub struct Ipa<'a, P: PackageManagement> {
     config: Config,

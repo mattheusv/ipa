@@ -1,4 +1,4 @@
-use super::{error, PackageManagement};
+use crate::{error, PackageManagement};
 use log::{debug, warn};
 use std::process::{Command, Stdio};
 

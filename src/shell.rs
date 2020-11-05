@@ -1,4 +1,4 @@
-use super::error::IpaError;
+use crate::error::IpaError;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use std::process::{Command, Output};

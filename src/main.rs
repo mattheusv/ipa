@@ -1,11 +1,5 @@
-use ipa::{cli, config, error, pacman, runner};
+use ipa::{cli::Options, config::Config, error::IpaError, pacman::Pacman, runner::Ipa};
 use log::info;
-
-use cli::Options;
-use config::Config;
-use error::IpaError;
-use pacman::Pacman;
-use runner::Ipa;
 
 fn main() {
     let options = Options::new();

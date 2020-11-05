@@ -1,6 +1,5 @@
 use shellexpand::LookupError;
-use std::env::VarError;
-use std::io::Error;
+use std::{env::VarError, io::Error};
 
 #[derive(Debug)]
 pub enum IpaError {

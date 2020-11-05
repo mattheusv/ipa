@@ -1,9 +1,7 @@
-use super::error::IpaError;
+use crate::error::IpaError;
 use log::{debug, warn};
 use serde::{Deserialize, Serialize};
-use std::os::unix;
-use std::path::Path;
-use std::{fs, io};
+use std::{fs, io, os::unix, path::Path};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct SymLink {

@@ -1,8 +1,6 @@
-use super::{shell::Shell, symlink::SymLink, IpaError};
+use crate::{shell::Shell, symlink::SymLink, IpaError};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::fs;
-use std::path::Path;
+use std::{collections::HashMap, fs, path::Path};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct Package {
