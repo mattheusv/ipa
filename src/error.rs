@@ -9,6 +9,7 @@ pub enum IpaError {
     InvalidPath(LookupError<VarError>),
     InvalidGroup,
     EmptyCommand,
+    InvalidCommand,
 }
 
 impl std::fmt::Display for IpaError {
@@ -19,6 +20,7 @@ impl std::fmt::Display for IpaError {
             IpaError::InvalidPath(e) => write!(f, "Invalid path: {}", e),
             IpaError::InvalidGroup => write!(f, "Invalid group name"),
             IpaError::EmptyCommand => write!(f, "Empty command to execute"),
+            IpaError::InvalidCommand => write!(f, "Invalid command"),
         }
     }
 }

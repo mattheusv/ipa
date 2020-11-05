@@ -29,13 +29,27 @@ impl PackageManagement for Pacman {
             return Ok(());
         }
         debug!("Installing package {}", package);
-        Command::new(self.bin)
+        let status = Command::new(self.bin)
             .arg("-S")
             .arg(package)
             .arg("--noconfirm")
             .arg("--quiet")
             .stdout(Stdio::null())
             .status()?;
-        Ok(())
+        if status.success() {
+            return Ok(());
+        }
+        return Err(error::IpaError::InvalidCommand);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_install_invalid_command() {
+        let pacman = Pacman::new();
+        assert!(pacman.install("-bla").is_err());
     }
 }
