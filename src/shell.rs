@@ -1,7 +1,27 @@
-use crate::error::IpaError;
 use log::debug;
 use serde::{Deserialize, Serialize};
+use std::io;
 use std::process::{Command, Output};
+
+#[derive(Debug)]
+pub enum Error {
+    /// io error to execute command.
+    Io(io::Error),
+}
+
+impl From<io::Error> for Error {
+    fn from(val: io::Error) -> Self {
+        Error::Io(val)
+    }
+}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Error::Io(e) => write!(f, "{}", e),
+        }
+    }
+}
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct Shell {
@@ -17,7 +37,7 @@ impl Shell {
     }
 }
 
-pub fn execute(shell: &Shell) -> Result<Output, IpaError> {
+pub fn execute(shell: &Shell) -> Result<Output, Error> {
     debug!("Executing command: {}", shell.command);
     Ok(Command::new("bash")
         .arg("-c")

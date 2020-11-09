@@ -1,4 +1,9 @@
-use ipa::{cli::Options, config::Config, error::IpaError, pacman::Pacman, runner::Ipa};
+use ipa::{
+    cli::Options,
+    config::Config,
+    pacman::Pacman,
+    runner::{Error, Ipa},
+};
 use log::info;
 
 fn main() {
@@ -33,7 +38,7 @@ fn init_logger(options: &Options) -> Result<(), log::SetLoggerError> {
         .init()
 }
 
-fn run(options: Options, config: Config) -> Result<(), IpaError> {
+fn run(options: Options, config: Config) -> Result<(), Error> {
     let pacman = Pacman::new();
     let ipa = Ipa::new(config, &pacman);
 

@@ -1,7 +1,38 @@
-use crate::error::IpaError;
 use log::{debug, warn};
 use serde::{Deserialize, Serialize};
+use shellexpand::LookupError;
+use std::env::VarError;
 use std::{fs, io, os::unix, path::Path};
+
+#[derive(Debug)]
+pub enum Error {
+    /// Could not expand path
+    ShellExpand(LookupError<VarError>),
+
+    /// io error creating symlink.
+    Io(io::Error),
+}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Error::ShellExpand(e) => write!(f, "Unable to expand path: {}", e),
+            Error::Io(e) => write!(f, "{}", e),
+        }
+    }
+}
+
+impl From<LookupError<VarError>> for Error {
+    fn from(val: LookupError<VarError>) -> Self {
+        Error::ShellExpand(val)
+    }
+}
+
+impl From<io::Error> for Error {
+    fn from(val: io::Error) -> Self {
+        Error::Io(val)
+    }
+}
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct SymLink {
@@ -27,7 +58,7 @@ impl SymLink {
     }
 }
 
-pub fn symlink(link: &SymLink) -> Result<(), IpaError> {
+pub fn symlink(link: &SymLink) -> Result<(), Error> {
     let mut src = String::new();
     let mut dst = String::new();
     symlink_path(
@@ -38,9 +69,9 @@ pub fn symlink(link: &SymLink) -> Result<(), IpaError> {
     )
 }
 
-fn symlink_path(src: &Path, dst: &Path, relink: bool, create: bool) -> Result<(), IpaError> {
+fn symlink_path(src: &Path, dst: &Path, relink: bool, create: bool) -> Result<(), Error> {
     if !src.exists() {
-        return Err(IpaError::Io(io::Error::new(
+        return Err(Error::Io(io::Error::new(
             io::ErrorKind::NotFound,
             format!("source file of link does not exists: {:?}", src),
         )));
@@ -73,7 +104,7 @@ fn symlink_path(src: &Path, dst: &Path, relink: bool, create: bool) -> Result<()
     Ok(())
 }
 
-fn symlink_dir(src: &Path, dst: &Path, relink: bool, create: bool) -> Result<(), IpaError> {
+fn symlink_dir(src: &Path, dst: &Path, relink: bool, create: bool) -> Result<(), Error> {
     debug!("Create symbolic link to all files into {:?}", src);
     for entry in fs::read_dir(src)? {
         let entry = entry?;
@@ -104,7 +135,7 @@ fn symlink_dir(src: &Path, dst: &Path, relink: bool, create: bool) -> Result<(),
 }
 
 // Convert a path like `~/some/path/in/home` to `/home/user/some/path/in/home`
-fn expand_path<'a>(s: &str, out: &'a mut String) -> Result<&'a Path, IpaError> {
+fn expand_path<'a>(s: &str, out: &'a mut String) -> Result<&'a Path, Error> {
     let path = shellexpand::full(s)?;
     out.push_str(path.as_ref());
     Ok(Path::new(out))

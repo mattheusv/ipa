@@ -1,6 +1,34 @@
-use crate::{error, PackageManagement};
 use log::{debug, warn};
+use std::io;
 use std::process::{Command, Stdio};
+
+pub trait PackageManagement {
+    fn install(&self, name: &str) -> Result<(), Error>;
+}
+
+#[derive(Debug)]
+pub enum Error {
+    /// Error installing package
+    PacmanSync(String),
+
+    /// io error installing package.
+    Io(io::Error),
+}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Error::PacmanSync(p) => write!(f, "Unable to install package {}", p),
+            Error::Io(e) => write!(f, "{}", e),
+        }
+    }
+}
+
+impl From<io::Error> for Error {
+    fn from(val: io::Error) -> Self {
+        Error::Io(val)
+    }
+}
 
 pub struct Pacman {
     bin: &'static str,
@@ -23,7 +51,7 @@ impl Pacman {
 }
 
 impl PackageManagement for Pacman {
-    fn install(&self, package: &str) -> Result<(), error::IpaError> {
+    fn install(&self, package: &str) -> Result<(), Error> {
         if self.is_installed(package)? {
             warn!("Package {} already installed", package);
             return Ok(());
@@ -39,7 +67,7 @@ impl PackageManagement for Pacman {
         if status.success() {
             return Ok(());
         }
-        return Err(error::IpaError::InvalidCommand);
+        return Err(Error::PacmanSync(package.to_string()));
     }
 }
 

@@ -1,26 +1,67 @@
 use crate::{
     config::{Config, Values},
-    error::IpaError,
-    shell,
-    symlink::symlink,
-    PackageManagement,
+    pacman, shell, symlink,
 };
 use log::info;
 
-pub struct Ipa<'a, P: PackageManagement> {
+#[derive(Debug)]
+pub enum Error {
+    /// Group name not exists in config
+    InvalidGroup,
+
+    /// Error with instalation of package
+    Pacman(pacman::Error),
+
+    /// Error with creating symbolic link
+    SymLink(symlink::Error),
+
+    /// Error to execute shell commands
+    Shell(shell::Error),
+}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Error::InvalidGroup => write!(f, "Invalid group name"),
+            Error::Pacman(err) => err.fmt(f),
+            Error::SymLink(err) => err.fmt(f),
+            Error::Shell(err) => err.fmt(f),
+        }
+    }
+}
+
+impl From<shell::Error> for Error {
+    fn from(val: shell::Error) -> Self {
+        Error::Shell(val)
+    }
+}
+
+impl From<pacman::Error> for Error {
+    fn from(val: pacman::Error) -> Self {
+        Error::Pacman(val)
+    }
+}
+
+impl From<symlink::Error> for Error {
+    fn from(val: symlink::Error) -> Self {
+        Error::SymLink(val)
+    }
+}
+
+pub struct Ipa<'a, P: pacman::PackageManagement> {
     config: Config,
     pacman: &'a P,
 }
 
 impl<'a, P> Ipa<'a, P>
 where
-    P: PackageManagement,
+    P: pacman::PackageManagement,
 {
     pub fn new(config: Config, pacman: &'a P) -> Self {
         Ipa { config, pacman }
     }
 
-    pub fn setup_except_group(&self, group: &str) -> Result<(), IpaError> {
+    pub fn setup_except_group(&self, group: &str) -> Result<(), Error> {
         for (g, values) in self.config.values.iter() {
             if g != group {
                 info!("Configuring values of group {}", group);
@@ -30,15 +71,15 @@ where
         Ok(())
     }
 
-    pub fn setup_group(&self, group: &str) -> Result<(), IpaError> {
+    pub fn setup_group(&self, group: &str) -> Result<(), Error> {
         if let Some(values) = self.config.values.get(group) {
             info!("Configuring values of group {}", group);
             return self.process(&values);
         }
-        Err(IpaError::InvalidGroup)
+        Err(Error::InvalidGroup)
     }
 
-    pub fn setup(&self) -> Result<(), IpaError> {
+    pub fn setup(&self) -> Result<(), Error> {
         for (group, values) in self.config.values.iter() {
             info!("Configuring values of group {}", group);
             self.process(values)?;
@@ -46,20 +87,20 @@ where
         Ok(())
     }
 
-    fn process(&self, values: &[Values]) -> Result<(), IpaError> {
+    fn process(&self, values: &[Values]) -> Result<(), Error> {
         for value in values.iter() {
             self.process_value(value)?;
         }
         Ok(())
     }
 
-    fn process_value(&self, value: &Values) -> Result<(), IpaError> {
+    fn process_value(&self, value: &Values) -> Result<(), Error> {
         if let Some(ref package) = value.package {
             self.pacman.install(&package.name)?;
         }
 
         if let Some(ref link) = value.link {
-            symlink(link)?;
+            symlink::symlink(link)?;
         }
 
         if let Some(ref shell) = value.shell {
@@ -87,8 +128,8 @@ mod tests {
         }
     }
 
-    impl PackageManagement for FakePacman {
-        fn install(&self, package: &str) -> Result<(), IpaError> {
+    impl pacman::PackageManagement for FakePacman {
+        fn install(&self, package: &str) -> Result<(), pacman::Error> {
             self.installed_packages
                 .borrow_mut()
                 .push(String::from(package));
