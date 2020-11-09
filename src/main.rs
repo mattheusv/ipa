@@ -1,7 +1,7 @@
 use ipa::{
     cli::Options,
     config::Config,
-    pacman::Pacman,
+    pacman::pacman::Pacman,
     runner::{Error, Ipa},
 };
 use log::info;
