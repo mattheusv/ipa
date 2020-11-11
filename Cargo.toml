@@ -1,6 +1,6 @@
 [package]
 name = "ipa"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Matheus Alcantara <matheusssilv97@gmail.com>"]
 description = "Another dotfiles manager that can install and configure your packages"
 edition = "2018"
