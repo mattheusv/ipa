@@ -96,7 +96,7 @@ where
 
     fn process_value(&self, value: &Values) -> Result<(), Error> {
         if let Some(ref package) = value.package {
-            self.pacman.install(&package.name)?;
+            self.pacman.install(&package)?;
         }
 
         if let Some(ref link) = value.link {
@@ -129,10 +129,10 @@ mod tests {
     }
 
     impl pacman::PackageManagement for FakePacman {
-        fn install(&self, package: &str) -> Result<(), pacman::Error> {
+        fn install(&self, package: &pacman::Package) -> Result<(), pacman::Error> {
             self.installed_packages
                 .borrow_mut()
-                .push(String::from(package));
+                .push(package.name.clone());
             Ok(())
         }
     }

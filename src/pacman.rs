@@ -1,10 +1,7 @@
 use log::{debug, warn};
+use serde::{Deserialize, Serialize};
 use std::io;
 use std::process::{Command, Stdio};
-
-pub trait PackageManagement {
-    fn install(&self, name: &str) -> Result<(), Error>;
-}
 
 #[derive(Debug)]
 pub enum Error {
@@ -30,6 +27,24 @@ impl From<io::Error> for Error {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+pub struct Package {
+    #[serde(default)]
+    pub name: String,
+}
+
+impl Package {
+    pub fn new(name: &str) -> Self {
+        Package {
+            name: name.to_string(),
+        }
+    }
+}
+
+pub trait PackageManagement {
+    fn install(&self, package: &Package) -> Result<(), Error>;
+}
+
 pub struct Pacman {
     bin: &'static str,
 }
@@ -51,15 +66,15 @@ impl Pacman {
 }
 
 impl PackageManagement for Pacman {
-    fn install(&self, package: &str) -> Result<(), Error> {
-        if self.is_installed(package)? {
-            warn!("Package {} already installed", package);
+    fn install(&self, package: &Package) -> Result<(), Error> {
+        if self.is_installed(&package.name)? {
+            warn!("Package {} already installed", package.name);
             return Ok(());
         }
-        debug!("Installing package {}", package);
+        debug!("Installing package {}", package.name);
         let status = Command::new(self.bin)
             .arg("-S")
-            .arg(package)
+            .arg(&package.name)
             .arg("--noconfirm")
             .arg("--quiet")
             .stdout(Stdio::null())
@@ -67,7 +82,7 @@ impl PackageManagement for Pacman {
         if status.success() {
             return Ok(());
         }
-        return Err(Error::PacmanSync(package.to_string()));
+        return Err(Error::PacmanSync(package.name.clone()));
     }
 }
 
@@ -78,6 +93,6 @@ mod tests {
     #[test]
     fn test_install_invalid_command() {
         let pacman = Pacman::new();
-        assert!(pacman.install("-bla").is_err());
+        assert!(pacman.install(&Package::new("-bla")).is_err());
     }
 }
