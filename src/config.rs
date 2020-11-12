@@ -1,4 +1,4 @@
-use crate::{shell::Shell, symlink::SymLink};
+use crate::{pacman::Package, shell::Shell, symlink::SymLink};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fs, io, path::Path};
 
@@ -37,20 +37,6 @@ impl From<io::Error> for Error {
 impl From<serde_yaml::Error> for Error {
     fn from(e: serde_yaml::Error) -> Self {
         Error::Yaml(e)
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
-pub struct Package {
-    #[serde(default)]
-    pub name: String,
-}
-
-impl Package {
-    pub fn new(name: &str) -> Self {
-        Package {
-            name: name.to_string(),
-        }
     }
 }
 

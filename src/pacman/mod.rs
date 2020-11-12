@@ -1,8 +1,23 @@
+use serde::{Deserialize, Serialize};
 use std::io;
 pub mod pacman;
 
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+pub struct Package {
+    #[serde(default)]
+    pub name: String,
+}
+
+impl Package {
+    pub fn new(name: &str) -> Self {
+        Package {
+            name: name.to_string(),
+        }
+    }
+}
+
 pub trait PackageManagement {
-    fn install(&self, name: &str) -> Result<(), Error>;
+    fn install(&self, package: &Package) -> Result<(), Error>;
 }
 
 #[derive(Debug)]
