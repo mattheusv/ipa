@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::io;
+#[cfg(feature = "apt")]
+pub mod apt;
 pub mod archlinux;
 
 #[derive(Debug)]
@@ -48,6 +50,7 @@ pub struct Pacman<T: PackageManagement> {
     target: T,
 }
 
+#[cfg(feature = "pacman")]
 impl Pacman<archlinux::Pacman> {
     pub fn new() -> Self {
         Pacman {
@@ -56,7 +59,24 @@ impl Pacman<archlinux::Pacman> {
     }
 }
 
+#[cfg(feature = "pacman")]
 impl PackageManagement for Pacman<archlinux::Pacman> {
+    fn install(&self, package: &Package) -> Result<(), Error> {
+        self.target.install(package)
+    }
+}
+
+#[cfg(feature = "apt")]
+impl Pacman<apt::Apt> {
+    pub fn new() -> Self {
+        Pacman {
+            target: apt::Apt::new(),
+        }
+    }
+}
+
+#[cfg(feature = "apt")]
+impl PackageManagement for Pacman<apt::Apt> {
     fn install(&self, package: &Package) -> Result<(), Error> {
         self.target.install(package)
     }
