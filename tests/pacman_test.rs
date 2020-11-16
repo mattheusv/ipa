@@ -16,7 +16,7 @@ fn test_setup_pacman() {
             .as_path(),
     )
     .unwrap();
-    let pacman = pacman::Pacman::new();
+    let pacman = pacman::archlinux::Pacman::new();
     let ipa = runner::Ipa::new(config, &pacman);
 
     assert!(ipa.setup().is_ok());
