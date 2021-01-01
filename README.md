@@ -13,6 +13,14 @@ The principal motivation with this project is to learn about Rust development an
 
 You can install ipa using prebuilt binaries from [GitHub release page](https://github.com/msAlcantara/ipa/releases/latest). Make sure that **glibc** is installed
 
+#### Using Cargo
+
+You can also install ipa using cargo
+
+```bash
+$ cargo install ipa
+```
+
 ## Configuration
 Ipa use a yaml configuration file that you can describe all packages and config files that you want to install.
 The configuration file is divided between groups, so you can create groups of configs and setup them individually latter.
