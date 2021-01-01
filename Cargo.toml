@@ -3,9 +3,10 @@ name = "ipa"
 version = "0.4.0-dev"
 authors = ["Matheus Alcantara <matheusssilv97@gmail.com>"]
 description = "Another dotfiles manager that can install and configure your packages"
+license-file = "LICENSE"
+readme = "README.md"
+homepage = "https://github.com/msAlcantara/ipa"
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
